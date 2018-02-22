@@ -15,16 +15,16 @@ let users = [];
     const list = true;
     const sum = true;
 
+    // wether the bot accepts straight attribute roll commands (e.g.: "!Agility" for "!rola Agility")
+    const dirAttr = true;
+
 // on message to bot
 bot.on('message', (message) => {
-
-    console.log("AA");
-    console.log(FB.defaultHP);
     
     let id = message.author.id;              // user id
 
     // checando se foi um comando
-    if (message.content.slice(0, 1) == '!') {
+    if (message.content.slice(0, 1) === '!') {
         const cmd = message.content.slice(1);    // shorthand for the entered command
         let str = "";                            // response string
 
@@ -145,7 +145,8 @@ bot.on('message', (message) => {
                 } else {
                     let msg = "Os personagens que você tem são: \n\n";
                     for (let i = 0; i < users[id].chars.length; i++)
-                        msg += "\t\t" + (1+i) + ") " + users[id].chars[i].name + "\n";
+                        msg += "\t\t" + (1+i) + ") " + users[id].chars[i].name
+                        msg+= "\n";
                     msg += "\nQual o número do personagem que você quer deixar ativo?"
                     message.author.send(msg);
                     users[id].isChosingActiveChar = true;
@@ -237,7 +238,6 @@ bot.on('message', (message) => {
                     switch (users[id].chars[users[id].activeCharId].system) {
                         // se o personagem é de Open Legend - Fantasy Battle
                         case "Open Legend - Fantasy Battle":
-                            console.log("aa");
                             // se o usuário não entrou nenhum argumento, tratar como uma rolagem normal
                             if (cmd.split(" ").length < 2) {
                                 let rollArgs = Dice.getDiceRoll(cmd);
@@ -251,8 +251,15 @@ bot.on('message', (message) => {
 
                                 // if the user entered a valid attribute, roll 1d20 + 2*that attribute [+ bonus]
                                 FB.useAttribute(cmd.split(" ")[1].toLowerCase(), (Attribute) => {
-                                    if (cmd.split(" ").length > 2 && Number.isInteger(Number(cmd.split(" ")[2].trim())))
-                                        bonus += Number(cmd.split(" ")[2].trim());
+                                    // if there is a bonus, add it
+                                    if (/[0-9]+/.test(cmd)) {
+                                        // if the bonus is positive
+                                        if (/\+ *[0-9]+/.test(cmd))
+                                            bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                        // if the bonus is negative
+                                        if (/\- *[0-9]+/.test(cmd))
+                                            bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
+                                    }
 
                                     str += FB.rollAttribute(users[id].chars[users[id].activeCharId][Attribute] + bonus);
 
@@ -261,8 +268,15 @@ bot.on('message', (message) => {
                                     if (invAttribute === "initiative" ||
                                         invAttribute === "iniciativa") {
 
-                                        if (cmd.split(" ").length > 2 && Number.isInteger(Number(cmd.split(" ")[2].trim())))
-                                            bonus += Number(cmd.split(" ")[2].trim());
+                                        // if there is a bonus, add it
+                                        if (/[0-9]+/.test(cmd)) {
+                                            // if the bonus is positive
+                                            if (/\+ *[0-9]+/.test(cmd))
+                                                bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                            // if the bonus is negative
+                                            if (/\- *[0-9]+/.test(cmd))
+                                                bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                        }
 
                                         str += FB.rollInitiative(users[id].chars[users[id].activeCharId].Agility + bonus);
                                     }
@@ -304,7 +318,7 @@ bot.on('message', (message) => {
                 switch (users[id].chars[users[id].activeCharId].system) {
                     case "Open Legend - Fantasy Battle":
                         // se o usuário não entrou nenhum argumento, usar o attributo padrão do personagem
-                        if (cmd.split(" ").length < 2) {
+                        if (cmd.split(" ").length == 1) {
                             str += FB.rollDamage(users[id].chars[users[id].activeCharId][users[id].chars[users[id].activeCharId].attackAttribute]);
                             break;
                         }
@@ -312,16 +326,32 @@ bot.on('message', (message) => {
                         // se o usuário entrou algum argumento
                         else {
                             let bonus = 0;
-                            FB.useAttribute(cmd.split(" ")[1].toLowerCase(), (Attribute) => {
-                                // se foi um attributo válido
-                                if (cmd.split(" ").length > 2 && !Number.isNaN(Number(cmd.split(" ")[2].trim())) && Number.isInteger(Number(cmd.split(" ")[2].trim())))
-                                    bonus += Number(cmd.split(" ")[2].trim());
+                            FB.useAttribute(cmd.split(" ")[1].toLowerCase(),
+                            // se foi um attributo válido
+                            (Attribute) => {
+                                // if there is a bonus, add it
+                                if (/[0-9]+/.test(cmd)) {
+                                    // if the bonus is positive
+                                    if (/\+ *[0-9]+/.test(cmd))
+                                        bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                    // if the bonus is negative
+                                    if (/\- *[0-9]+/.test(cmd))
+                                        bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                }
                                 str += FB.rollDamage(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                            },
+                            // se não foi um attributo válido
+                            (invAttribute) => {
+                                // if the invalid attribute was a bonus for the default attack attribute (!dmg +bonus)
+                                if (/(\+|-) *[0-9]+/.test(cmd)) {
 
-                            }, (invAttribute) => {
-                                // se não foi um attributo válido
-                                if (!Number.isNaN(Number(cmd.split(" ")[1].trim())) && Number.isInteger(Number(cmd.split(" ")[1].trim()))) {
-                                    bonus += Number(cmd.split(" ")[1].trim());
+                                    // if the bonus is positive
+                                    if (/\+ *[0-9]+/.test(cmd))
+                                        bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                    // if the bonus is negative
+                                    if (/\- *[0-9]+/.test(cmd))
+                                        bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+
                                     str += FB.rollDamage(users[id].chars[users[id].activeCharId][users[id].chars[users[id].activeCharId].attackAttribute] + bonus);
                                 }
                                 // se não é, comando invalido
@@ -351,20 +381,76 @@ bot.on('message', (message) => {
                 str += FB.rollAttribute(users[id].chars[users[id].activeCharId].Agility);
                 break;
 
+            case "mana":
+            case "mp":
+            case "hp":
+            case "stamina":
+                
+                // se a info do usuário não está carregada, carregue-a em memória
+                if (!(id in users)) {
+                    // se a pessoa não tem um arquivo
+                    if (!fs.existsSync('users/'+message.author.id+'.json'))
+                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
+
+                    // get the users data from file
+                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
+                }
+
+                // se o usuário não tem um personagem carregado, sair
+                if (!users[id].hasOwnProperty("activeCharId"))
+                    break;
+                
+                // if user entered a number
+
             default:
+                // se a info do usuário não está carregada, carregue-a em memória
+                if (!(id in users)) {
+                    // se a pessoa não tem um arquivo
+                    if (!fs.existsSync('users/'+message.author.id+'.json'))
+                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
+
+                    // get the users data from file
+                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
+                }
+
+                // se foi uma rolagem de attributo, e o usuário tem um personagem do "OL-FB" ativo
+                if (dirAttr && users[id].hasOwnProperty("activeCharId") &&
+                    users[id].chars[users[id].activeCharId].system === "Open Legend - Fantasy Battle") {
+                    
+                    let bonus = 0;
+                    FB.useAttribute(cmd.split(" ")[0].toLowerCase(),
+                    // if if is an attribute roll, roll it.
+                        (Attribute) => {
+                            // if there is a bonus, add it
+                            if (/[0-9]+/.test(cmd)) {
+                                // if the bonus is positive
+                                if (/\+ *[0-9]+/.test(cmd))
+                                    bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                // if the bonus is negative
+                                if (/\- *[0-9]+/.test(cmd))
+                                    bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                            }
+                            // roll the attribute
+                            str += FB.rollAttribute(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                        },
+                    // if if isn't
+                        (invAtt) => {
+                            str += "conheço essa merda de commando " + invAtt + " não. Aprende a escrever oh retardado.";
+                        }
+                    );
+                }
+
                 // se foi uma rolagem de dado
-                if (Dice.isDiceRollCmd(cmd)) {
+                else if (Dice.isDiceRollCmd(cmd)) {
                     let rollArgs = Dice.getDiceRoll(cmd);
                     let rollResult = Dice.rollDice(rollArgs, list, sum, false);
-
                     str += rollResult;
-                    break;
                 } 
                 // se não
                 else {
                     str += "conheço essa merda de commando " + cmd.split(" ")[0].toLowerCase() + " não. Aprende a escrever oh retardado.";
-                    break;
                 }
+                break;
         }
 
         // se é pra mandar alguma coisa
@@ -388,9 +474,10 @@ bot.on('message', (message) => {
                 message.content.toLowerCase().trim() === "sim" || message.content.toLowerCase().trim() === "s") {
                 
                     // get rid of work-in-progress character
-                    users[id].chars.pop()
-                    delete users[id].isCreatingChar;
+                    users[id].chars.pop();
+                    users[id].chars.push({ id: users[id].chars.length, step: "naming"});
                     delete users[id].resetCharCreationConfirm;
+                    message.user.send("Ok, e qual é o nome do seu personagem novo?");
                 }
             else if  (message.content.toLowerCase().trim() === "no" || message.content.toLowerCase().trim() === "n" ||
             message.content.toLowerCase().trim() === "nao" || message.content.toLowerCase().trim() === "não") {
@@ -456,8 +543,8 @@ bot.on('message', (message) => {
                         case "fantasy battle":
                         case "open legend":
                             users[id].chars[users[id].chars.length-1].system = "Open Legend - Fantasy Battle";
-                            message.author.send("Seu personagem é do sistema \"Open Legend - Fantasy Battle\", então. Agora nós vamos cuidar dos Attributos do seu Personagem. Quanto de Agilidade seu personagem tem?");
-                            users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
+                            message.author.send("Seu personagem é do sistema \"Open Legend - Fantasy Battle\", então. Quanto de HP seu personagem tem?");
+                            users[id].chars[users[id].chars.length-1].step = "OL: HP setting";
                             break;
                         
                         default:
@@ -466,295 +553,326 @@ bot.on('message', (message) => {
                     }
                     break;
                 
-                case "OL: stating Agi":
+                case "OL: HP setting":
+                    // if the response was a number
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Agility = Number(/[0-9]+/.exec(message.content)[0]);
+                        let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].HP
+                                + " de HP máximo. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de MP(Mana) máximo?";
+                        users[id].chars[users[id].chars.length-1].step = "OL: MP setting";
+                        message.author.send(msg);
+                    } 
                     // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Agilidade "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Qual o HP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
                         message.author.send(msg);
                     }
+                    break;
+                    
+                case "OL: MP setting":
+                // if the response was a number
+                if (/[0-9]+/.test(message.content)) {
+                    users[id].chars[users[id].chars.length-1].Agility = Number(/[0-9]+/.exec(message.content)[0]);
+                    let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].MP
+                            + " de MP máximo. Agora nós vamos cuidar dos Attributos do seu Personagem. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
+                    users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
+                    message.author.send(msg);
+                }
+                // if the response was not a number
+                else {
+                    let msg = "Isso não é um número. Aprenda a digitar números. Qual o MP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
+                    message.author.send(msg);
+                }
+                break;
+                
+                case "OL: stating Agi":
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Agility = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Agility = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Agility
                                 + " de Agilidade. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Fortitude?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating For";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Agilidade "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating For":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Fortitude "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Fortitude = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Fortitude = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Fortitude
                                 + " de Fortitude. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Might/Força?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Mig";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Fortitude "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
 
                 case "OL: stating Mig":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Might "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
-                    // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Might = Number(message.content.trim());
+                     // if the response was a number
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Might = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Might
                                 + " de Might. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Learning/Aprendizado?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Lea";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Might "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Lea":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Learning "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Learning = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Learning = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Learning
                                 + " de Learning. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Logic/Lógica?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Log";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Learning "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Log":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Logic "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Logic = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Logic = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Logic
                                 + " de Logic. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Perception/Percepção?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Perc";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Logic "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Perc":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Perception "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Perception = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Perception = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Perception
                                 + " de Perception. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Will/Vontade?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Will";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Perception "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Will":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Will "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Will = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Will = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Will
                                 + " de Will. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Deception/Decepção?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Dec";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Will "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                     
                 case "OL: stating Dec":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Deception "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Deception = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Deception = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Deception
                                 + " de Deception. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Persuasion/Persuasão?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Pers";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Deception "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
 
                 case "OL: stating Pers":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Persuasion "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Persuasion = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Persuasion = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Persuasion
                                 + " de Persuasion. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Presence/Presença?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Prese";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Persuasion "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
 
                 case "OL: stating Prese":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Presence "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Presence = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Presence = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Presence
                                 + " de Presence. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Alteration/Alteração?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Alt";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Presence "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Alt":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Alteration "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Alteration = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Alteration = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Alteration
                                 + " de Alteration. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Creation/Criação?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Cre";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Alteration "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Cre":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Creation "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Creation = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Creation = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Creation
                                 + " de Creation. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Energy/Energia?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Ene";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Creation "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Ene":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Energy "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Energy = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Energy = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Energy
                                 + " de Energy. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Entropy/Entropia?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Ent";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Energy "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Ent":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Entropy "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Entropy = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Entropy = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Entropy
                                 + " de Entropy. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Influence/Influência?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Inf";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Entropy "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
                 
                 case "OL: stating Inf":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Influence "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Influence = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Influence = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Influence
                                 + " de Influence. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Movement/Movimento?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Mov";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Influence "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
             
                 case "OL: stating Mov":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Movement "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Movement = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Movement = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Movement
                                 + " de Movement. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Prescience/Presciência?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Presc";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Movement "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
             
                 case "OL: stating Presc":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Prescience "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Prescience = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Prescience = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Prescience
                                 + " de Prescience. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Protection/Proteção?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Pro";
                         message.author.send(msg);
                     }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Prescience "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
+                    }
                     break;
             
                 case "OL: stating Pro":
-                    // if the response was not a number
-                    if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))) {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Protection "+ users[id].chars[users[id].chars.length-1].name +" tem?";
-                        message.author.send(msg);
-                    }
                     // if the response was a number
-                    else {
-                        users[id].chars[users[id].chars.length-1].Protection = Number(message.content.trim());
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].Protection = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Protection
                                 + " de Protection.";
                         message.author.send(msg);
 
-                        // pegar attributo de ataque do personagem
-                        users[id].chars[users[id].chars.length-1].step = "OL: damage attr";
-                        message.author.send("Qual attributo "+ users[id].chars[users[id].chars.length-1].name +" usa para atacar?");
-
+                    // pegar attributo de ataque do personagem
+                    users[id].chars[users[id].chars.length-1].step = "OL: damage attr";
+                    message.author.send("Qual attributo "+ users[id].chars[users[id].chars.length-1].name +" usa para atacar?");
+                    }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Protection "+ users[id].chars[users[id].chars.length-1].name +" tem?";
+                        message.author.send(msg);
                     }
                     break;
                 
@@ -777,21 +895,20 @@ bot.on('message', (message) => {
                     break;
             }
         } else if (users[id].isChosingActiveChar) {
-            // se não é um número ou é numero invalido
-            if (isNaN(message.content.trim()) || !Number.isInteger(Number(message.content.trim()))
-            || Number(message.content.trim()) < 1 || Number(message.content.trim()) > users[id].chars.length) {
+            // if the response was not a number
+            if (!/[0-9]+/.test(message.content)) {
                 message.author.send("Isso não é um número válido para as opções apresentadas. Aprenda a digitar números. Tente de novo.");
             }
             // se é um numero
             else {
                 // se é o personagem ativo atual
-                if (users[id].activeCharId === Number(message.content.trim())-1) {
+                if (users[id].activeCharId === Number(/[0-9]+/.exec(message.content)[0]) - 1) {
                     message.author.send(users[id].chars[users[id].activeCharId].name+" já é o personagem ativo.");
                     delete users[id].isChosingActiveChar;
                 }
                 // se é um personagem válido que não o atual
                 else {
-                    users[id].possibleNewActiveCharID = Number(message.content.trim())-1;
+                    users[id].possibleNewActiveCharID = Number(/[0-9]+/.exec(message.content)[0]) - 1;
                     users[id].isConfirmingNewActiveChar = true;
                     message.author.send("Mudar personagem ativo de "+ users[id].chars[users[id].activeCharId].name
                     +" para "+users[id].chars[users[id].possibleNewActiveCharID].name+"?");

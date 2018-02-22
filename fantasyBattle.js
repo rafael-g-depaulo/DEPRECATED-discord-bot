@@ -142,7 +142,7 @@ exports.rollDamage = function (attribute) {
 /**
  * @description checks if att is a valid attribute name, then calls func(att) if so.
  * 
- * @param {String} att          attribute to be used in function call
+ * @param {string} att          attribute to be used in function call
  * @param {Function} ifValid    function to be executed on valid attributes. uses att as argument
  * @param {Function} ifInvalid  function to be executed on invalid attributes. uses att as argument
  * 
@@ -324,9 +324,64 @@ exports.useAttribute = function (att, ifValid, ifInvalid) {
     return true;
 }
 
-exports.defaultHP = {};
-Object.defineProperty(exports, "defaultHP", {
-    writable: false
-});
+/**
+ * @typedef Resource
+ * 
+ * @property {number} Base       base/bonus of the resource
+ * @property {number} Level      how much resource the character gains based on their level
+ * 
+ * @property {number} HighPhys   multiplier of character's Highest Physical Attribute on resource's formula
+ * @property {number} HighMental multiplier of character's Highest Mental Attribute on resource's formula
+ * @property {number} HighSocial multiplier of character's Highest Social Attribute on resource's formula
+ * @property {number} HighSuper  multiplier of character's Highest Supernatural Attribute on resource's formula
+ * 
+ * @property {number} Agility    multiplier of character's Agility on resource's formula
+ * @property {number} Fortitude  multiplier of character's fortitude on resource's formula
+ * @property {number} Might      multiplier of character's Might on resource's formula
+ * 
+ * @property {number} Learning   multiplier of character's Learning on resource's formula
+ * @property {number} Logic      multiplier of character's Logic on resource's formula
+ * @property {number} Perception multiplier of character's Perception on resource's formula
+ * @property {number} Will       multiplier of character's Will on resource's formula
+ * 
+ * @property {number} Deception  multiplier of character's Deception on resource's formula
+ * @property {number} Persuasion multiplier of character's Persuasion on resource's formula
+ * @property {number} Presence   multiplier of character's Presence on resource's formula
+ * 
+ * @property {number} Alteration multiplier of character's Alteration on resource's formula
+ * @property {number} Creation   multiplier of character's Creation on resource's formula
+ * @property {number} Energy     multiplier of character's Energy on resource's formula
+ * @property {number} Entropy    multiplier of character's Entropy on resource's formula
+ * @property {number} Influence  multiplier of character's Influence on resource's formula
+ * @property {number} Movement   multiplier of character's Movement on resource's formula
+ * @property {number} Prescience multiplier of character's Prescience on resource's formula
+ * @property {number} Protection multiplier of character's Protection on resource's formula
+ */
 
-console.log(exports.defaultHP);
+/**
+ * @typedef Character
+ * 
+ * @property {number} Level
+ * 
+ * @property {number} Agility    
+ * @property {number} Fortitude  
+ * @property {number} Might      
+ * 
+ * @property {number} Learning   
+ * @property {number} Logic      
+ * @property {number} Perception 
+ * @property {number} Will       
+ * 
+ * @property {number} Deception  
+ * @property {number} Persuasion 
+ * @property {number} Presence   
+ * 
+ * @property {number} Alteration 
+ * @property {number} Creation   
+ * @property {number} Energy     
+ * @property {number} Entropy    
+ * @property {number} Influence  
+ * @property {number} Movement   
+ * @property {number} Prescience 
+ * @property {number} Protection
+ */

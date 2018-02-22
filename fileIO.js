@@ -10,9 +10,9 @@ const fs = require('fs'),
 /**
  * @description reads a file and returns it's buffer as a String
  * 
- * @param {String} relPath The relative path of the file to be read.
+ * @param {string} relPath The relative path of the file to be read.
  * 
- * @returns {String} The file's content, as a String
+ * @returns {string} The file's content, as a String
  */
 exports.read = function (relPath) {
     return fs.readFileSync(path.join(__dirname, relPath), 'utf8');
@@ -21,8 +21,8 @@ exports.read = function (relPath) {
 /**
  * @description writes data to a file assyncronously
  * 
- * @param {String} relPath  The relative path of the file to be writen in.
- * @param {String} data     The data to write into the file.
+ * @param {string} relPath  The relative path of the file to be writen in.
+ * @param {string} data     The data to write into the file.
  */
 exports.write = function (relPath, data) {
     fs.writeFile(path.join(__dirname, relPath), data, 'utf8', (err) => {
@@ -36,8 +36,8 @@ exports.write = function (relPath, data) {
 /**
  * @description writes data to a file assyncronously
  * 
- * @param {String} relPath  The relative path of the file to be writen in.
- * @param {String} data     The data to write into the file.
+ * @param {string} relPath  The relative path of the file to be writen in.
+ * @param {string} data     The data to write into the file.
  */
 exports.writeSync = function (relPath, data) {
     fs.writeFileSync(path.join(__dirname, relPath), data, 'utf8');

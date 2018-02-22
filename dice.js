@@ -16,8 +16,8 @@
 /**
  * @typedef {Object} RollResults
  * 
- * @property {String} list      The string representing the list of dice roll results
- * @property {String} sum       The string representing the sum of dice roll results
+ * @property {string} list      The string representing the list of dice roll results
+ * @property {string} sum       The string representing the sum of dice roll results
  * @property {Number} resultSum The sum of all of the dice rolls
  */
 
@@ -63,7 +63,7 @@ const disadvantageWords = [
 /**
  * @description check if a command is a valid dice roll
  * 
- * @param {String} args The string representing the command & arguments 
+ * @param {string} args The string representing the command & arguments 
  * 
  * @returns {Boolean} Wether the args represent at least one dice roll command
  */
@@ -96,7 +96,7 @@ exports.isDiceRollCmd = function(args) {
  * @param {Boolean} sum     Wether or not the results should be summed
  * @param {Boolean} sumRes  Wether or not the total dice roll results should be summed
  * 
- * @returns {String}
+ * @returns {string}
  */
 exports.rollDice = function(diceArgs, list, sum, sumRes) {
     // if dice isn't an array, a mistake has been made
@@ -321,7 +321,7 @@ const rollDie = function(die) {
 /**
  * @description gets the roll commands in args
  * 
- * @param {String} args     The string representing the command & arguments
+ * @param {string} args     The string representing the command & arguments
  * 
  * @returns {Roll[]}        The array of dice roll commands
  */
@@ -349,7 +349,7 @@ exports.getDiceRoll = function(args) {
 /**
  * @description return the next dice roll and the index of the next word in _args, or return false if no dice roll
  * 
- * @param {String} _args     The string representing the command & arguments 
+ * @param {string} _args     The string representing the command & arguments 
  * @param {Number} index    The 0-starting index from wich to stat looking, in args, for a valid roll command
  * 
  * @returns {{next:Number, roll: Roll}|Boolean}  Either the roll command and the index of the word immediatelly next to it, or false, if no valid roll was found in the array
@@ -440,7 +440,7 @@ const getNextDie = function(_args, index) {
 /**
  * @description return the advantage in _args. Negative for disadvantage
  * 
- * @param {String} args    The string representing the command & arguments
+ * @param {string} args    The string representing the command & arguments
  * 
  * @returns {Number}        The advantage on the roll, and how many characters after index the advantage part of the string ends.
  */
