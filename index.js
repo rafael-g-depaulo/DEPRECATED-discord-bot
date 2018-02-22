@@ -225,7 +225,7 @@ bot.on('message', (message) => {
                 }
     
                 // se a pessoa não tem um personagem ativo, tratar como uma rolagem normal
-                if (users[id].activeCharId === undefined) {
+                if (!users[id].hasOwnProperty("activeCharId")) {
                     let rollArgs = Dice.getDiceRoll(cmd);
                     let rollResult = Dice.rollDice(rollArgs, list, sum, false);
 
@@ -378,7 +378,7 @@ bot.on('message', (message) => {
                     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
                 }
 
-                str += FB.rollAttribute(users[id].chars[users[id].activeCharId].Agility);
+                str += FB.rollInitiative(users[id].chars[users[id].activeCharId].Agility);
                 break;
 
             case "mana":
@@ -413,9 +413,172 @@ bot.on('message', (message) => {
                     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
                 }
 
-                // se foi uma rolagem de attributo, e o usuário tem um personagem do "OL-FB" ativo
-                if (dirAttr && users[id].hasOwnProperty("activeCharId") &&
-                    users[id].chars[users[id].activeCharId].system === "Open Legend - Fantasy Battle") {
+                // se está mexendo com um personagem diretamente
+                let curChar = false;
+                for (let i = 0; i < users[id].chars.length; i++)
+                    if (users[id].chars[i].name.search(cmd.split(" ")[0].toLowerCase()))
+                        curChar = i;
+                if (curChar !== false && cmd.split(" ").length > 1) {
+                    switch (cmd.split(" ")[1].toLowerCase()) {
+                        case "mana":
+                        case "mp":
+                        case "hp":
+                        case "stamina":
+                            break;
+                            
+                        case "initiative":
+                        case "iniciativa":        
+                            str += FB.rollInitiative(users[id].chars[curChar].Agility);
+                            break;
+
+                        case 'dano':
+                        case 'damage':
+                        case 'dmg':
+                            // lidar com o personagem ativo de acordo com o sistema que ele usa
+                            switch (users[id].chars[curChar].system) {
+                                case "Open Legend - Fantasy Battle":
+                                    // se o usuário não entrou nenhum argumento, usar o attributo padrão do personagem
+                                    if (cmd.split(" ").length == 2) {
+                                        str += FB.rollDamage(users[id].chars[curChar][users[id].chars[curChar].attackAttribute]);
+                                        break;
+                                    }
+            
+                                    // se o usuário entrou algum argumento
+                                    else {
+                                        let bonus = 0;
+                                        FB.useAttribute(cmd.split(" ")[2].toLowerCase(),
+                                        // se foi um attributo válido
+                                        (Attribute) => {
+                                            // if there is a bonus, add it
+                                            if (/[0-9]+/.test(cmd)) {
+                                                // if the bonus is positive
+                                                if (/\+ *[0-9]+/.test(cmd))
+                                                    bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                                // if the bonus is negative
+                                                if (/\- *[0-9]+/.test(cmd))
+                                                    bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                            }
+                                            str += FB.rollDamage(users[id].chars[curChar][Attribute] + bonus);
+                                        },
+                                        // se não foi um attributo válido
+                                        (invAttribute) => {
+                                            // if the invalid attribute was a bonus for the default attack attribute (!dmg +bonus)
+                                            if (/(\+|-) *[0-9]+/.test(cmd)) {
+            
+                                                // if the bonus is positive
+                                                if (/\+ *[0-9]+/.test(cmd))
+                                                    bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                                // if the bonus is negative
+                                                if (/\- *[0-9]+/.test(cmd))
+                                                    bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+            
+                                                str += FB.rollDamage(users[id].chars[curChar][users[id].chars[curChar].attackAttribute] + bonus);
+                                            }
+                                            // se não é, comando invalido
+                                            else
+                                                str += invAttribute + " não é um atributo válido. Aprenda a escrever.";
+                                        });
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                            
+                        case 'role':
+                        case 'rola':
+                        case 'checa':
+                            // lidar com o personagem ativo de acordo com o sistema que ele usa
+                            switch (users[id].chars[users[id].activeCharId].system) {
+                                // se o personagem é de Open Legend - Fantasy Battle
+                                case "Open Legend - Fantasy Battle":
+                                    // se o usuário não entrou nenhum argumento, tratar como uma rolagem normal
+                                    if (cmd.split(" ").length < 3) {
+                                        let rollArgs = Dice.getDiceRoll(cmd);
+                                        let rollResult = Dice.rollDice(rollArgs, list, sum, false);
+                                        str += rollResult;
+                                        break;
+                                    }
+                                    // se o usuário entrou algum argumento
+                                    else {
+                                        let bonus = 0;
+        
+                                        // if the user entered a valid attribute, roll 1d20 + 2*that attribute [+ bonus]
+                                        FB.useAttribute(cmd.split(" ")[2].toLowerCase(), (Attribute) => {
+                                            // if there is a bonus, add it
+                                            if (/[0-9]+/.test(cmd)) {
+                                                // if the bonus is positive
+                                                if (/\+ *[0-9]+/.test(cmd))
+                                                    bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                                // if the bonus is negative
+                                                if (/\- *[0-9]+/.test(cmd))
+                                                    bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
+                                            }
+        
+                                            str += FB.rollAttribute(users[id].chars[curChar][Attribute] + bonus);
+        
+                                        }, (invAttribute) => {
+                                            // if they are rolling for initiative.
+                                            if (invAttribute === "initiative" ||
+                                                invAttribute === "iniciativa") {
+        
+                                                // if there is a bonus, add it
+                                                if (/[0-9]+/.test(cmd)) {
+                                                    // if the bonus is positive
+                                                    if (/\+ *[0-9]+/.test(cmd))
+                                                        bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                                    // if the bonus is negative
+                                                    if (/\- *[0-9]+/.test(cmd))
+                                                        bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                                }
+        
+                                                str += FB.rollInitiative(users[id].chars[curChar].Agility + bonus);
+                                            }
+        
+                                            // if they arent rolling for initiative, then they made a mistake
+                                            else {
+                                                str += invAttribute + " não é um atributo válido. Aprenda a escrever.";
+                                            }
+                                        });
+                                    }
+                                    break;
+        
+                                default:
+                                    break;
+                                }
+                            break;
+                            
+                        default:
+                            // se foi uma rolagem de attributo, e o usuário tem um personagem do "OL-FB" ativo
+                            if (users[id].chars[curChar].system === "Open Legend - Fantasy Battle") {
+                                let bonus = 0;
+                                FB.useAttribute(cmd.split(" ")[1].toLowerCase(),
+                                // if if is an attribute roll, roll it.
+                                    (Attribute) => {
+                                        // if there is a bonus, add it
+                                        if (/[0-9]+/.test(cmd)) {
+                                            // if the bonus is positive
+                                            if (/\+ *[0-9]+/.test(cmd))
+                                                bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                            // if the bonus is negative
+                                            if (/\- *[0-9]+/.test(cmd))
+                                                bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                        }
+                                        // roll the attribute
+                                        str += FB.rollAttribute(users[id].chars[curChar][Attribute] + bonus);
+                                    },
+                                // if if isn't
+                                    (invAtt) => {
+                                        str += "conheço essa merda de comando " + invAtt + " não. Aprende a escrever oh retardado.";
+                                    }
+                                );
+                            }
+                            break;
+                    }
+                }
+                
+                // se foi uma rolagem de attributo
+                if (users[id].chars[users[id].activeCharId].system === "Open Legend - Fantasy Battle") {
                     
                     let bonus = 0;
                     FB.useAttribute(cmd.split(" ")[0].toLowerCase(),
@@ -433,10 +596,8 @@ bot.on('message', (message) => {
                             // roll the attribute
                             str += FB.rollAttribute(users[id].chars[users[id].activeCharId][Attribute] + bonus);
                         },
-                    // if if isn't
-                        (invAtt) => {
-                            str += "conheço essa merda de commando " + invAtt + " não. Aprende a escrever oh retardado.";
-                        }
+                    // if if isn't, do nothing
+                        (invAtt) => {}
                     );
                 }
 
@@ -448,7 +609,7 @@ bot.on('message', (message) => {
                 } 
                 // se não
                 else {
-                    str += "conheço essa merda de commando " + cmd.split(" ")[0].toLowerCase() + " não. Aprende a escrever oh retardado.";
+                    str += "conheço essa merda de comando " + cmd.split(" ")[0].toLowerCase() + " não. Aprende a escrever oh retardado.";
                 }
                 break;
         }
