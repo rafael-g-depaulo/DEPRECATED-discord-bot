@@ -324,6 +324,45 @@ exports.useAttribute = function (att, ifValid, ifInvalid) {
     return true;
 }
 
+exports.getMaxHP = function(char) {
+    return
+        10 +
+        2 * char.Fortitude +
+        2 * char.Presence + 
+        1 * char.Will + 
+        Math.floor(1.5 * char.Might) + 
+        2 * char.Level;
+}
+
+exports.getMaxMP = function(char) {
+    let maxSuper = [
+        char.Alteration,
+        char.Creation,
+        char.Energy,
+        char.Entropy,
+        char.Influence,
+        char.Movement,
+        char.Prescience,
+        char.Protection
+    ].sort((a, b) => a-b)[0];
+
+    return
+        10 +
+        3 * char.Learning +
+        2 * char.Will +
+        Math.ceil(1.5 * maxSuper) +
+        2 * char.Level;
+}
+
+exports.getMaxStamina = function(char) {
+    return
+        10 +
+        3 * char.Fortitude +
+        2 * char.Agility +
+        1 * char.Might +
+        1 * char.Level;
+}
+
 /**
  * @typedef Resource
  * 
