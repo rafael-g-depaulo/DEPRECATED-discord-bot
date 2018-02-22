@@ -130,8 +130,12 @@ bot.on('message', (message) => {
                     // if more than one chars found
                     else if (char.length > 1) {
                         let msg = "Multiplos personagens com nomes compatíveis achados. Os personagens achados com nomes compatíveis são: \n";
-                        for (let i = 0; i < char.length; i++)
-                            msg += "\t\t" + i+1 + ") " + char[i].name + "\n";
+                        for (let i = 0; i < char.length; i++) {
+                            msg += "\t\t" + i+1 + ") " + char[i].name;
+                            if (i == char.length-1 && users[id].hasOwnProperty("isCreatingChar"))
+                                msg += "(em progresso)";
+                            msg += "\n";
+                        }
                         msg += "\nQual o número do personagem que você quer deixar ativo?";
                         message.author.send(msg);
                         users[id].isChosingActiveChar = true;
@@ -386,21 +390,32 @@ bot.on('message', (message) => {
             case "hp":
             case "stamina":
                 
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
+                // // se a info do usuário não está carregada, carregue-a em memória
+                // if (!(id in users)) {
+                //     // se a pessoa não tem um arquivo
+                //     if (!fs.existsSync('users/'+message.author.id+'.json'))
+                //         fileIO.writeSync('users/'+message.author.id+'.json', '{}');
 
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
+                //     // get the users data from file
+                //     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
+                // }
 
-                // se o usuário não tem um personagem carregado, sair
-                if (!users[id].hasOwnProperty("activeCharId"))
-                    break;
+                // // se o usuário não tem um personagem carregado, sair
+                // if (!users[id].hasOwnProperty("activeCharId"))
+                //     break;
                 
-                // if user entered a number
+                // // if user entered a bonus, add it
+                // if (/(\+|-) *[0-9]+/.test(cmd)) {
+                //     let bonus = 0;
+                //     // if it is a positive bonus
+                //     if (/\+ *[0-9]+/.test(cmd))
+                //         bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                //     // if it is a negative bonus
+                //     if (/- *[0-9]+/.test(cmd))
+                //         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+
+                //     users[id].chars[users[id].activeCharId].asdasdas += bonus;
+                // }
 
             default:
                 // se a info do usuário não está carregada, carregue-a em memória
@@ -638,7 +653,7 @@ bot.on('message', (message) => {
                     users[id].chars.pop();
                     users[id].chars.push({ id: users[id].chars.length, step: "naming"});
                     delete users[id].resetCharCreationConfirm;
-                    message.user.send("Ok, e qual é o nome do seu personagem novo?");
+                    message.author.send("Ok, e qual é o nome do seu personagem novo?");
                 }
             else if  (message.content.toLowerCase().trim() === "no" || message.content.toLowerCase().trim() === "n" ||
             message.content.toLowerCase().trim() === "nao" || message.content.toLowerCase().trim() === "não") {
@@ -646,7 +661,7 @@ bot.on('message', (message) => {
                 // get rid of work-in-progress character
                 delete users[id].resetCharCreationConfirm;
             } else {
-                message.user.send("Eu não entendi, pode responder de novo?");
+                message.author.send("Eu não entendi, pode responder de novo?");
             }
         }
         // se esta criando personagem
@@ -717,7 +732,8 @@ bot.on('message', (message) => {
                 case "OL: HP setting":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Agility = Number(/[0-9]+/.exec(message.content)[0]);
+                        users[id].chars[users[id].chars.length-1].maxHP = Number(/[0-9]+/.exec(message.content)[0]);
+                        users[id].chars[users[id].chars.length-1].HP    = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].HP
                                 + " de HP máximo. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de MP(Mana) máximo?";
                         users[id].chars[users[id].chars.length-1].step = "OL: MP setting";
@@ -733,7 +749,8 @@ bot.on('message', (message) => {
                 case "OL: MP setting":
                 // if the response was a number
                 if (/[0-9]+/.test(message.content)) {
-                    users[id].chars[users[id].chars.length-1].Agility = Number(/[0-9]+/.exec(message.content)[0]);
+                    users[id].chars[users[id].chars.length-1].maxMP = Number(/[0-9]+/.exec(message.content)[0]);
+                    users[id].chars[users[id].chars.length-1].MP    = Number(/[0-9]+/.exec(message.content)[0]);
                     let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].MP
                             + " de MP máximo. Agora nós vamos cuidar dos Attributos do seu Personagem. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
                     users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
