@@ -379,7 +379,7 @@ const getNextDie = function(_args, index) {
         args = args.slice(0, args.indexOf(postRollArg) + postRollArg.length);
     }
     // update next to be at the start of the next roll
-    next = index + + rollStr.length;
+    next = index + rollStr.length + /[0-9]* *d *[0-9]+ *!*/i.exec(args).index;
 
     // get the dice args
     let roll = {};

@@ -325,13 +325,16 @@ exports.useAttribute = function (att, ifValid, ifInvalid) {
 }
 
 exports.getMaxHP = function(char) {
-    return
-        10 +
-        2 * char.Fortitude +
-        2 * char.Presence + 
-        1 * char.Will + 
-        Math.floor(1.5 * char.Might) + 
-        2 * char.Level;
+
+    let HP = 
+    10 +
+    2 * char.Fortitude +
+    2 * char.Presence + 
+    1 * char.Will + 
+    Math.floor(1.5 * char.Might) + 
+    2 * char.Level;
+
+    return HP;
 }
 
 exports.getMaxMP = function(char) {
@@ -346,21 +349,25 @@ exports.getMaxMP = function(char) {
         char.Protection
     ].sort((a, b) => a-b)[0];
 
-    return
+    let MP =
         10 +
         3 * char.Learning +
         2 * char.Will +
         Math.ceil(1.5 * maxSuper) +
         2 * char.Level;
+
+    return MP;
 }
 
 exports.getMaxStamina = function(char) {
-    return
+    let stamina =
         10 +
         3 * char.Fortitude +
         2 * char.Agility +
         1 * char.Might +
         1 * char.Level;
+
+    return stamina;
 }
 
 /**

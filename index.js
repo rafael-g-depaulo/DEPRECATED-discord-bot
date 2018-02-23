@@ -18,10 +18,21 @@ let users = [];
     // wether the bot accepts straight attribute roll commands (e.g.: "!Agility" for "!rola Agility")
     const dirAttr = true;
 
+    // wether the bot accepts commands on general chat
+    const genCmds = false;
+
 // on message to bot
 bot.on('message', (message) => {
+
+    // if from general chat, ignore
+    if (!genCmds && message.channel.name === "general")
+        return;
     
     let id = message.author.id;              // user id
+    let actChar;                             // users active character
+    if ((id in users) && users[id].activeCharId) {
+        actChar = users[id].chars[users[id].activeCharId];
+    }
 
     // checando se foi um comando
     if (message.content.slice(0, 1) === '!') {
@@ -105,8 +116,7 @@ bot.on('message', (message) => {
                 
                 // se um nome foi inserido
                 if (name !== "") {
-                    // let char = users[id].chars.find((ele, i, array) => (ele.name.toLowerCase().search(name) !== -1));
-                    let char = users[id].chars.reduce((prev, ele, i, chars) => {
+                    let foundChars = users[id].chars.reduce((prev, ele, i, chars) => {
                         if (ele.name.toLowerCase().search(name) !== -1) {
                             prev.push(ele);
                         }
@@ -114,27 +124,25 @@ bot.on('message', (message) => {
                     }, []);
 
                     // if one char found
-                    if (char.length === 1) {
+                    if (foundChars.length === 1) {
+                        actChar = users[id].chars[users[id].activeCharId];  // currently active char
                         // se o personagem achado é o personagem ativo atualmente
-                        if (char[0].id === users[id].activeCharId) {
-                            message.author.send(users[id].chars[users[id].activeCharId].name+" já é o personagem ativo.");
+                        if (foundChars[0].id === users[id].activeCharId) {
+                            message.author.send(actChar.name+" já é o personagem ativo.");
                         } else {
-                            console.log(char[0].id);
-                            console.log(users[id].activeCharId);
                             users[id].isConfirmingNewActiveChar = true;
-                            users[id].possibleNewActiveCharID = char[0].id;
-                            message.author.send("Quer mudar seu personagem ativo de "+ users[id].chars[users[id].activeCharId].name +" para "+ char[0].name
+                            users[id].possibleNewActiveCharID = foundChars[0].id;
+                            message.author.send("Quer mudar seu personagem ativo de "+ actChar.name +" para "+ foundChars[0].name
                             +"? Por favor digite sim para confirmar, ou qualquer outra coisa para reverter a mudança");
                         }
                     }
                     // if more than one chars found
-                    else if (char.length > 1) {
+                    else if (foundChars.length > 1) {
                         let msg = "Multiplos personagens com nomes compatíveis achados. Os personagens achados com nomes compatíveis são: \n";
-                        for (let i = 0; i < char.length; i++) {
-                            msg += "\t\t" + i+1 + ") " + char[i].name;
-                            if (i == char.length-1 && users[id].hasOwnProperty("isCreatingChar"))
+                        for (let i = 0; i < foundChars.length; i++) {
+                            msg += "\t\t" + i+1 + ") " + foundChars[i].name;
+                            if (i == foundChars.length-1 && users[id].hasOwnProperty("isCreatingChar"))
                                 msg += "(em progresso)";
-                            msg += "\n";
                         }
                         msg += "\nQual o número do personagem que você quer deixar ativo?";
                         message.author.send(msg);
@@ -148,9 +156,10 @@ bot.on('message', (message) => {
                 // se não
                 } else {
                     let msg = "Os personagens que você tem são: \n\n";
-                    for (let i = 0; i < users[id].chars.length; i++)
-                        msg += "\t\t" + (1+i) + ") " + users[id].chars[i].name
-                        msg+= "\n";
+                    for (let i = 0; i < users[id].foundChars.length; i++) {
+                        msg += "\t\t" + (1+i) + ") " + users[id].foundChars[i].name
+                        msg += "\n";
+                    }
                     msg += "\nQual o número do personagem que você quer deixar ativo?"
                     message.author.send(msg);
                     users[id].isChosingActiveChar = true;
@@ -178,36 +187,43 @@ bot.on('message', (message) => {
                 else {
                     
                     let msg = "";
+                    actChar = users[id].chars[users[id].activeCharId];  // active character
+                    FB.getMaxHP(actChar);
 
-                    switch (users[id].chars[users[id].activeCharId].system) {
+                    switch (actChar.system) {
                         case "Open Legend - Fantasy Battle":
-                            msg += "Seu personagem ativo é "+ users[id].chars[users[id].activeCharId].name + ". Seus stats são:\n\n"
+                            msg += "Seu personagem ativo é "+ actChar.name + ". Seus stats são:\n\n"
+
+                            + "**Hit Points(HP)**:\t\t\t" + actChar.HP        + " / "
+                                + actChar.maxHP + "\n"
+                            + "**Mana Points(MP)**:\t\t" + actChar.MP        + " / "
+                                + actChar.maxMP + "\n\n"
 
                             + "\t**Physical**:\n"
-                                +  "\t\tAgility: "    + users[id].chars[users[id].activeCharId].Agility     + "\n"
-                                +  "\t\tFortitude: "  + users[id].chars[users[id].activeCharId].Fortitude   + "\n"
-                                +  "\t\tMight: "      + users[id].chars[users[id].activeCharId].Might       + "\n\n"
+                                +  "\t\tAgility: "    + actChar.Agility     + "\n"
+                                +  "\t\tFortitude: "  + actChar.Fortitude   + "\n"
+                                +  "\t\tMight: "      + actChar.Might       + "\n\n"
                                 
                             + "\t**Mental**:\n"
-                                +  "\t\tLearning: "   + users[id].chars[users[id].activeCharId].Learning    + "\n"
-                                +  "\t\tLogic: "      + users[id].chars[users[id].activeCharId].Logic       + "\n"
-                                +  "\t\tPerception: " + users[id].chars[users[id].activeCharId].Perception  + "\n"
-                                +  "\t\tWill: "       + users[id].chars[users[id].activeCharId].Will        + "\n\n"
+                                +  "\t\tLearning: "   + actChar.Learning    + "\n"
+                                +  "\t\tLogic: "      + actChar.Logic       + "\n"
+                                +  "\t\tPerception: " + actChar.Perception  + "\n"
+                                +  "\t\tWill: "       + actChar.Will        + "\n\n"
                                 
                             + "\t**Social**:\n"
-                                +  "\t\tDeception: "  + users[id].chars[users[id].activeCharId].Deception   + "\n"
-                                +  "\t\tPersuasion: " + users[id].chars[users[id].activeCharId].Persuasion  + "\n"
-                                +  "\t\tPresence: "   + users[id].chars[users[id].activeCharId].Presence    + "\n\n"
+                                +  "\t\tDeception: "  + actChar.Deception   + "\n"
+                                +  "\t\tPersuasion: " + actChar.Persuasion  + "\n"
+                                +  "\t\tPresence: "   + actChar.Presence    + "\n\n"
                                 
                             + "\t**Supernatural**:\n"
-                                +  "\t\tAlteration: " + users[id].chars[users[id].activeCharId].Alteration  + "\n"
-                                +  "\t\tCreation: "   + users[id].chars[users[id].activeCharId].Creation    + "\n"
-                                +  "\t\tEnergy: "     + users[id].chars[users[id].activeCharId].Energy      + "\n"
-                                +  "\t\tEntropy: "    + users[id].chars[users[id].activeCharId].Entropy     + "\n"
-                                +  "\t\tInfluence: "  + users[id].chars[users[id].activeCharId].Influence   + "\n"
-                                +  "\t\tMovement: "   + users[id].chars[users[id].activeCharId].Movement    + "\n"
-                                +  "\t\tPrescience: " + users[id].chars[users[id].activeCharId].Prescience  + "\n"
-                                +  "\t\tProtection: " + users[id].chars[users[id].activeCharId].Protection;
+                                +  "\t\tAlteration: " + actChar.Alteration  + "\n"
+                                +  "\t\tCreation: "   + actChar.Creation    + "\n"
+                                +  "\t\tEnergy: "     + actChar.Energy      + "\n"
+                                +  "\t\tEntropy: "    + actChar.Entropy     + "\n"
+                                +  "\t\tInfluence: "  + actChar.Influence   + "\n"
+                                +  "\t\tMovement: "   + actChar.Movement    + "\n"
+                                +  "\t\tPrescience: " + actChar.Prescience  + "\n"
+                                +  "\t\tProtection: " + actChar.Protection;
 
                             message.author.send(msg);
                             break;
@@ -217,6 +233,7 @@ bot.on('message', (message) => {
 
             case 'role':
             case 'rola':
+            case 'roll':
             case 'checa':
                 // se a info do usuário não está carregada, carregue-a em memória
                 if (!(id in users)) {
@@ -238,8 +255,9 @@ bot.on('message', (message) => {
                 }
                 // se a pessoa tem um personagem ativo, procurar um attributo para rolar
                 else {
+                    actChar = users[id].chars[users[id].activeCharId];      // active character
                     // lidar com o personagem ativo de acordo com o sistema que ele usa
-                    switch (users[id].chars[users[id].activeCharId].system) {
+                    switch (actChar.system) {
                         // se o personagem é de Open Legend - Fantasy Battle
                         case "Open Legend - Fantasy Battle":
                             // se o usuário não entrou nenhum argumento, tratar como uma rolagem normal
@@ -265,7 +283,7 @@ bot.on('message', (message) => {
                                             bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
                                     }
 
-                                    str += FB.rollAttribute(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                                    str += FB.rollAttribute(actChar[Attribute] + bonus);
 
                                 }, (invAttribute) => {
                                     // if they are rolling for initiative.
@@ -282,12 +300,18 @@ bot.on('message', (message) => {
                                                 bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                         }
 
-                                        str += FB.rollInitiative(users[id].chars[users[id].activeCharId].Agility + bonus);
+                                        str += FB.rollInitiative(actChar.Agility + bonus);
                                     }
 
-                                    // if they arent rolling for initiative, then they made a mistake
+                                    // if they arent rolling for initiative, test if making a straight roll
                                     else {
-                                        str += invAttribute + " não é um atributo válido. Aprenda a escrever.";
+                                        if (Dice.isDiceRollCmd(cmd)) {
+                                            let rollArgs = Dice.getDiceRoll(cmd);
+                                            let rollResult = Dice.rollDice(rollArgs, list, sum, false);
+                                            str += rollResult;
+                                        } else {
+                                            str += invAttribute + " não é um atributo válido. Aprenda a escrever.";
+                                        }
                                     }
                                 });
                             }
@@ -318,12 +342,14 @@ bot.on('message', (message) => {
                     break;
                 }
 
+                
+
                 // lidar com o personagem ativo de acordo com o sistema que ele usa
-                switch (users[id].chars[users[id].activeCharId].system) {
+                switch (actChar.system) {
                     case "Open Legend - Fantasy Battle":
                         // se o usuário não entrou nenhum argumento, usar o attributo padrão do personagem
                         if (cmd.split(" ").length == 1) {
-                            str += FB.rollDamage(users[id].chars[users[id].activeCharId][users[id].chars[users[id].activeCharId].attackAttribute]);
+                            str += FB.rollDamage(actChar[actChar.attackAttribute]);
                             break;
                         }
 
@@ -342,7 +368,7 @@ bot.on('message', (message) => {
                                     if (/\- *[0-9]+/.test(cmd))
                                         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                 }
-                                str += FB.rollDamage(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                                str += FB.rollDamage(actChar[Attribute] + bonus);
                             },
                             // se não foi um attributo válido
                             (invAttribute) => {
@@ -356,7 +382,7 @@ bot.on('message', (message) => {
                                     if (/\- *[0-9]+/.test(cmd))
                                         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
 
-                                    str += FB.rollDamage(users[id].chars[users[id].activeCharId][users[id].chars[users[id].activeCharId].attackAttribute] + bonus);
+                                    str += FB.rollDamage(actChar[actChar.attackAttribute] + bonus);
                                 }
                                 // se não é, comando invalido
                                 else
@@ -382,40 +408,341 @@ bot.on('message', (message) => {
                     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
                 }
 
-                str += FB.rollInitiative(users[id].chars[users[id].activeCharId].Agility);
+                str += FB.rollInitiative(actChar.Agility);
                 break;
 
             case "mana":
+            case "manapoints":
             case "mp":
             case "hp":
-            case "stamina":
+            case "health":
+            case "vida":
+            case "saude":
+            case "saúde":
+            case "healthpoints":
+            case "hitpoints":
                 
-                // // se a info do usuário não está carregada, carregue-a em memória
-                // if (!(id in users)) {
-                //     // se a pessoa não tem um arquivo
-                //     if (!fs.existsSync('users/'+message.author.id+'.json'))
-                //         fileIO.writeSync('users/'+message.author.id+'.json', '{}');
+                // se a info do usuário não está carregada, carregue-a em memória
+                if (!(id in users)) {
+                    // se a pessoa não tem um arquivo
+                    if (!fs.existsSync('users/'+message.author.id+'.json'))
+                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
 
-                //     // get the users data from file
-                //     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                // }
+                    // get the users data from file
+                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
+                }
 
-                // // se o usuário não tem um personagem carregado, sair
-                // if (!users[id].hasOwnProperty("activeCharId"))
-                //     break;
+                // se o usuário não tem um personagem carregado, sair
+                if (!users[id].hasOwnProperty("activeCharId"))
+                    break;
                 
-                // // if user entered a bonus, add it
-                // if (/(\+|-) *[0-9]+/.test(cmd)) {
-                //     let bonus = 0;
-                //     // if it is a positive bonus
-                //     if (/\+ *[0-9]+/.test(cmd))
-                //         bonus = Number(/[0-9]+/.exec(cmd)[0]);
-                //     // if it is a negative bonus
-                //     if (/- *[0-9]+/.test(cmd))
-                //         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                // get active char
+                actChar = users[id].chars[users[id].activeCharId];
 
-                //     users[id].chars[users[id].activeCharId].asdasdas += bonus;
-                // }
+                // if user entered a bonus, add it
+                let bonus = 0;
+                if (/(\+|-) *[0-9]+/.test(cmd)) {
+                    // if it is a positive bonus
+                    if (/\+ *[0-9]+/.test(cmd))
+                        bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                    // if it is a negative bonus
+                    if (/- *[0-9]+/.test(cmd))
+                        bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+
+                    // add bonus to correspondant resource
+                    if (cmd.split(" ")[0].toLowerCase() === "mana" ||
+                        cmd.split(" ")[0].toLowerCase() === "manapoints" ||
+                        cmd.split(" ")[0].toLowerCase() === "mp") {
+                            actChar.MP += bonus;
+                            if (actChar.MP > actChar.maxMP)
+                                actChar.MP = actChar.maxMP;
+                    }
+                    else if (cmd.split(" ")[0].toLowerCase() === "hp" ||
+                             cmd.split(" ")[0].toLowerCase() === "health" ||
+                             cmd.split(" ")[0].toLowerCase() === "healthpoints" ||
+                             cmd.split(" ")[0].toLowerCase() === "hitpoints" ||
+                             cmd.split(" ")[0].toLowerCase() === "vida" ||
+                             cmd.split(" ")[0].toLowerCase() === "saúde" ||
+                             cmd.split(" ")[0].toLowerCase() === "saude") {
+                                actChar.HP += bonus;
+                                if (actChar.HP > actChar.maxHP)
+                                    actChar.HP = actChar.maxHP;
+                    }    
+                }
+
+                // show character's correspondent resource
+                // if mana
+                if (cmd.split(" ")[0].toLowerCase() === "mana" ||
+                    cmd.split(" ")[0].toLowerCase() === "manapoints" ||
+                    cmd.split(" ")[0].toLowerCase() === "mp") {
+                        str += "**" + actChar.name + "**:\n"
+                        +  "\tMP:\t" + actChar.MP + " / " + actChar.maxMP;
+                }
+                // if hp
+                else if (cmd.split(" ")[0].toLowerCase() === "hp" ||
+                         cmd.split(" ")[0].toLowerCase() === "health" ||
+                         cmd.split(" ")[0].toLowerCase() === "healthpoints" ||
+                         cmd.split(" ")[0].toLowerCase() === "hitpoints" ||
+                         cmd.split(" ")[0].toLowerCase() === "vida" ||
+                         cmd.split(" ")[0].toLowerCase() === "saúde" ||
+                         cmd.split(" ")[0].toLowerCase() === "saude") {
+                            str += "**" + actChar.name + "**:\n"
+                            +  "\tHP:\t" + actChar.HP + " / " + actChar.maxHP;
+                }
+                break;
+            
+            case "override":
+                // se a info do usuário não está carregada, carregue-a em memória
+                if (!(id in users)) {
+                    // se a pessoa não tem um arquivo
+                    if (!fs.existsSync('users/'+message.author.id+'.json'))
+                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
+
+                    // get the users data from file
+                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
+                }
+
+                // if not in form "!override resource/Attribute number/bonus" or "!override char resource/Attribute number/bonus", break
+                if ((cmd.split(" ").length < 4 || !/(\+|-)? *[0-9]/.test(cmd.split(" ")[3])) &&
+                    (cmd.split(" ").length < 3 || !/(\+|-)? *[0-9]/.test(cmd.split(" ")[2]))) {
+                    str += "Comando inválido. Se certifique que está usando a forma \"!override (nome do personagem) (recurso/atributo) (novo valor/bonus a ser adicionado)\"";
+                    break;
+                }
+                let char = cmd.split(" ")[1].toLowerCase();
+                let charId = -1;
+
+                // check if char is in user's char list
+                for (let i = 0; i < users[id].chars.length; i++) {
+                    if (users[id].chars[i].name.toLowerCase().search(char) !== -1) {
+                        charId = i;
+                        break;
+                    }
+                }
+
+                // if no character found, use active character
+                if (charId === -1) {
+                    actChar = users[id].chars[users[id].activeCharId];    // active character
+                    // test if in form "!override resource/Attribute number/bonus". if not, break
+                    if (cmd.split(" ").length >= 3 && /(\+|-)? *[0-9]/.test(cmd.split(" ")[2])) {
+                        // check what should be changed, and change it
+                        FB.useAttribute(cmd.split(" ")[1].toLowerCase(),
+                            // if changing attribute
+                            (Attribute) => {
+                                // if it was a bonus
+                                if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2]))
+                                    actChar[Attribute] += Number(cmd.split(" ")[2]);
+                                // if it was a static value
+                                else
+                                    actChar[Attribute] = Number(cmd.split(" ")[2]);
+                            },
+                            // if not attribute, check if it was a resource
+                            (invAttribute) => {
+                                // check if it was a valid resource
+                                switch (invAttribute) {
+                                    case "mana":
+                                    case "maxmana":
+                                    case "manapoints":
+                                    case "mp":
+                                    case "maxmp":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2])) {
+                                            actChar.maxMP += Number(cmd.split(" ")[2]);
+                                            actChar.MP    += Number(cmd.split(" ")[2]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            actChar.maxMP = Number(cmd.split(" ")[2]);
+                                            actChar.MP    = Number(cmd.split(" ")[2]);
+                                        }
+                                        break;
+
+                                    case "health":
+                                    case "hp":
+                                    case "healthpoints":
+                                    case "hitpoints":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2])) {
+                                            actChar.maxHP += Number(cmd.split(" ")[2]);
+                                            actChar.HP    += Number(cmd.split(" ")[2]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            actChar.maxHP = Number(cmd.split(" ")[2]);
+                                            actChar.HP    = Number(cmd.split(" ")[2]);
+                                        }
+                                        break;
+
+                                    case "stamina":
+                                    case "stam":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2])) {
+                                            actChar.maxStamina += Number(cmd.split(" ")[2]);
+                                            actChar.Stamina    += Number(cmd.split(" ")[2]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            actChar.maxStamina = Number(cmd.split(" ")[2]);
+                                            actChar.Stamina    = Number(cmd.split(" ")[2]);
+                                        }
+                                        break;
+                                }
+                            }
+                        );
+                    }
+                    // if not in valid form
+                    else {
+                        str += "Personagem inválido/inexistente. Tente de novo.";
+                    }
+                    break;
+                }
+
+                // if character found
+                else {
+                    // test if in form "!override character resource/Attribute number/bonus". if not, break
+                    if (cmd.split(" ").length >= 4 && /(\+|-)? *[0-9]/.test(cmd.split(" ")[3])) {
+                        // check what should be changed, and change it
+                        FB.useAttribute(cmd.split(" ")[2].toLowerCase(),
+                            // if changing attribute
+                            (Attribute) => {
+                                // if it was a bonus
+                                if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3]))
+                                    users[id].chars[charId][Attribute] += Number(cmd.split(" ")[3]);
+                                // if it was a static value
+                                else
+                                    users[id].chars[charId][Attribute] = Number(cmd.split(" ")[3]);
+                            },
+                            // if not attribute, check if it was a resource
+                            (invAttribute) => {
+                                // check if it was a valid resource
+                                switch (invAttribute) {
+                                    case "mana":
+                                    case "maxmana":
+                                    case "manapoints":
+                                    case "mp":
+                                    case "maxmp":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                            users[id].chars[charId].maxMP += Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].MP    += Number(cmd.split(" ")[3]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            users[id].chars[charId].maxMP = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].MP    = Number(cmd.split(" ")[3]);
+                                        }
+                                        break;
+
+                                    case "health":
+                                    case "hp":
+                                    case "healthpoints":
+                                    case "hitpoints":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                            users[id].chars[charId].maxHP += Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].HP    += Number(cmd.split(" ")[3]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            users[id].chars[charId].maxHP = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].HP    = Number(cmd.split(" ")[3]);
+                                        }
+                                        break;
+
+                                    case "stamina":
+                                    case "stam":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                            users[id].chars[charId].maxStamina += Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].Stamina    += Number(cmd.split(" ")[3]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            users[id].chars[charId].maxStamina = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].Stamina    = Number(cmd.split(" ")[3]);
+                                        }
+                                        break;
+                                    default:
+                                        str += "Atributo/recurso inválido ou nexistente. Tente de novo, mas se esforce dessa vez";
+                                        break;
+                                }
+                            }
+                        );
+                    }
+                    break;
+                }
+
+                // treat character accordingly to their system 
+                switch(users[id].chars[charId].system) {
+                    case "Open Legend - Fantasy Battle":
+
+                        // if a valid character was entered, check what should be changed, and change it
+                        FB.useAttribute(cmd.split(" ")[2].toLowerCase(),
+                            // if changing attribute
+                            (Attribute) => {
+                                // if it was a bonus
+                                if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3]))
+                                    users[id].chars['charId'][Attribute] += Number(cmd.split(" ")[3]);
+                                // if it was a static value
+                                else
+                                    users[id].chars[charId][Attribute] = Number(cmd.split(" ")[3]);
+                            },
+                            // if not attribute, check if it was a resource
+                            (invAttribute) => {
+                                // check if it was a valid resource
+                                switch (cmd.split(" ")[2].toLowerCase()) {
+                                    case "mana":
+                                    case "maxmana":
+                                    case "manapoints":
+                                    case "mp":
+                                    case "maxmp":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                            users[id].chars[charId].maxMP += Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].MP    += Number(cmd.split(" ")[3]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            users[id].chars[charId].maxMP = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].MP    = Number(cmd.split(" ")[3]);
+                                        }
+                                        break;
+
+                                    case "health":
+                                    case "hp":
+                                    case "healthpoints":
+                                    case "hitpoints":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                            users[id].chars[charId].maxHP += Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].HP    += Number(cmd.split(" ")[3]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            users[id].chars[charId].maxHP = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].HP    = Number(cmd.split(" ")[3]);
+                                        }
+                                        break;
+
+                                    case "stamina":
+                                    case "stam":
+                                        // if it was a bonus
+                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                            users[id].chars[charId].maxStamina += Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].Stamina    += Number(cmd.split(" ")[3]);
+                                        }
+                                        // if it was a static value
+                                        else {
+                                            users[id].chars[charId].maxStamina = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].Stamina    = Number(cmd.split(" ")[3]);
+                                        }
+                                        break;
+                                        break;
+                                }
+                            }
+                        );
+                        break;
+                }
+                break;
 
             default:
                 // se a info do usuário não está carregada, carregue-a em memória
@@ -431,30 +758,26 @@ bot.on('message', (message) => {
                 // se está mexendo com um personagem diretamente
                 let curChar = false;
                 for (let i = 0; i < users[id].chars.length; i++)
-                    if (users[id].chars[i].name.search(cmd.split(" ")[0].toLowerCase()))
+                    if (users[id].chars[i].name.toLowerCase().search(cmd.split(" ")[0].toLowerCase()) !== -1 && users[id].chars[i].step === "complete")
                         curChar = i;
+
                 if (curChar !== false && cmd.split(" ").length > 1) {
+                    let currentChar = users[id].chars[curChar];
                     switch (cmd.split(" ")[1].toLowerCase()) {
-                        case "mana":
-                        case "mp":
-                        case "hp":
-                        case "stamina":
-                            break;
-                            
                         case "initiative":
                         case "iniciativa":        
-                            str += FB.rollInitiative(users[id].chars[curChar].Agility);
+                            str += FB.rollInitiative(currentChar.Agility);
                             break;
 
                         case 'dano':
                         case 'damage':
                         case 'dmg':
                             // lidar com o personagem ativo de acordo com o sistema que ele usa
-                            switch (users[id].chars[curChar].system) {
+                            switch (currentChar.system) {
                                 case "Open Legend - Fantasy Battle":
                                     // se o usuário não entrou nenhum argumento, usar o attributo padrão do personagem
                                     if (cmd.split(" ").length == 2) {
-                                        str += FB.rollDamage(users[id].chars[curChar][users[id].chars[curChar].attackAttribute]);
+                                        str += FB.rollDamage(currentChar[currentChar.attackAttribute]);
                                         break;
                                     }
             
@@ -473,7 +796,7 @@ bot.on('message', (message) => {
                                                 if (/\- *[0-9]+/.test(cmd))
                                                     bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                             }
-                                            str += FB.rollDamage(users[id].chars[curChar][Attribute] + bonus);
+                                            str += FB.rollDamage(currentChar[Attribute] + bonus);
                                         },
                                         // se não foi um attributo válido
                                         (invAttribute) => {
@@ -487,7 +810,7 @@ bot.on('message', (message) => {
                                                 if (/\- *[0-9]+/.test(cmd))
                                                     bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
             
-                                                str += FB.rollDamage(users[id].chars[curChar][users[id].chars[curChar].attackAttribute] + bonus);
+                                                str += FB.rollDamage(currentChar[currentChar.attackAttribute] + bonus);
                                             }
                                             // se não é, comando invalido
                                             else
@@ -504,7 +827,7 @@ bot.on('message', (message) => {
                         case 'rola':
                         case 'checa':
                             // lidar com o personagem ativo de acordo com o sistema que ele usa
-                            switch (users[id].chars[users[id].activeCharId].system) {
+                            switch (currentChar.system) {
                                 // se o personagem é de Open Legend - Fantasy Battle
                                 case "Open Legend - Fantasy Battle":
                                     // se o usuário não entrou nenhum argumento, tratar como uma rolagem normal
@@ -530,7 +853,7 @@ bot.on('message', (message) => {
                                                     bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
                                             }
         
-                                            str += FB.rollAttribute(users[id].chars[curChar][Attribute] + bonus);
+                                            str += FB.rollAttribute(currentChar[Attribute] + bonus);
         
                                         }, (invAttribute) => {
                                             // if they are rolling for initiative.
@@ -547,7 +870,7 @@ bot.on('message', (message) => {
                                                         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                                 }
         
-                                                str += FB.rollInitiative(users[id].chars[curChar].Agility + bonus);
+                                                str += FB.rollInitiative(currentChar.Agility + bonus);
                                             }
         
                                             // if they arent rolling for initiative, then they made a mistake
@@ -562,10 +885,154 @@ bot.on('message', (message) => {
                                     break;
                                 }
                             break;
-                            
+                                    
+                        case "mana":
+                        case "manapoints":
+                        case "mp":
+                        case "hp":
+                        case "health":
+                        case "vida":
+                        case "saude":
+                        case "saúde":
+                        case "healthpoints":
+                        case "hitpoints":
+
+                            // if user entered a bonus, add it
+                            let bonus = 0;
+                            if (/(\+|-) *[0-9]+/.test(cmd)) {
+                                // if it is a positive bonus
+                                if (/\+ *[0-9]+/.test(cmd))
+                                    bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                                // if it is a negative bonus
+                                if (/- *[0-9]+/.test(cmd))
+                                    bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+
+                                // add bonus to correspondant resource
+                                if (cmd.split(" ")[1].toLowerCase() === "mana" ||
+                                    cmd.split(" ")[1].toLowerCase() === "manapoints" ||
+                                    cmd.split(" ")[1].toLowerCase() === "mp") {
+                                        currentChar.MP += bonus;
+                                        if (currentChar.MP > currentChar.maxMP)
+                                            currentChar.MP = currentChar.maxMP;
+                                }
+                                else if (cmd.split(" ")[1].toLowerCase() === "hp" ||
+                                        cmd.split(" ")[1].toLowerCase() === "health" ||
+                                        cmd.split(" ")[1].toLowerCase() === "healthpoints" ||
+                                        cmd.split(" ")[1].toLowerCase() === "hitpoints" ||
+                                        cmd.split(" ")[1].toLowerCase() === "vida" ||
+                                        cmd.split(" ")[1].toLowerCase() === "saúde" ||
+                                        cmd.split(" ")[1].toLowerCase() === "saude") {
+                                            currentChar.HP += bonus;
+                                            if (currentChar.HP > currentChar.maxHP)
+                                                currentChar.HP = currentChar.maxHP;
+                                }    
+                            }
+
+                            // show character's correspondent resource
+                            // if mana
+                            if (cmd.split(" ")[1].toLowerCase() === "mana" ||
+                                cmd.split(" ")[1].toLowerCase() === "manapoints" ||
+                                cmd.split(" ")[1].toLowerCase() === "mp") {
+                                    str += "**" + currentChar.name + "**:\n"
+                                    +  "\tMP:\t" + currentChar.MP + " / " + currentChar.maxMP;
+                            }
+                            // if hp
+                            else if (cmd.split(" ")[1].toLowerCase() === "hp" ||
+                                    cmd.split(" ")[1].toLowerCase() === "health" ||
+                                    cmd.split(" ")[1].toLowerCase() === "healthpoints" ||
+                                    cmd.split(" ")[1].toLowerCase() === "hitpoints" ||
+                                    cmd.split(" ")[1].toLowerCase() === "vida" ||
+                                    cmd.split(" ")[1].toLowerCase() === "saúde" ||
+                                    cmd.split(" ")[1].toLowerCase() === "saude") {
+                                        str += "**" + currentChar.name + "**:\n"
+                                        +  "\tHP:\t" + currentChar.HP + " / " + currentChar.maxHP;
+                            }
+                            break;
+                        
+                        case "override":
+
+                            // if not in form "!char override resource/Attribute number/bonus", break
+                            if (cmd.split(" ").length < 4 || !/[0-9]/.test(cmd.split(" ")[3])) {
+                                str += "Comando inválido. Se certifique que está usando a forma \"!(nome do personagem) override (recurso/atributo) (novo valor/bonus a ser adicionado)\"";
+                                break;
+                            }
+
+                            // treat character accordingly to their system 
+                            switch(currentChar.system) {
+                                case "Open Legend - Fantasy Battle":
+
+                                    // if a valid character was entered, check what should be changed, and change it
+                                    FB.useAttribute(cmd.split(" ")[2].toLowerCase(),
+                                        // if changing attribute
+                                        (Attribute) => {
+                                            // if it was a bonus
+                                            if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3]))
+                                                users[id].chars['charId'][Attribute] += Number(cmd.split(" ")[4]);
+                                            // if it was a static value
+                                            else
+                                            currentChar[Attribute] = Number(cmd.split(" ")[3]);
+                                        },
+                                        // if not attribute, check if it was a resource
+                                        (invAttribute) => {
+                                            // check if it was a valid resource
+                                            switch (cmd.split(" ")[2].toLowerCase()) {
+                                                case "mana":
+                                                case "maxmana":
+                                                case "manapoints":
+                                                case "mp":
+                                                case "maxmp":
+                                                    // if it was a bonus
+                                                    if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                                        currentChar.maxMP += Number(cmd.split(" ")[3]);
+                                                        currentChar.MP    += Number(cmd.split(" ")[3]);
+                                                    }
+                                                    // if it was a static value
+                                                    else {
+                                                        currentChar.maxMP = Number(cmd.split(" ")[3]);
+                                                        currentChar.MP    = Number(cmd.split(" ")[3]);
+                                                    }
+                                                    break;
+
+                                                case "health":
+                                                case "hp":
+                                                case "healthpoints":
+                                                case "hitpoints":
+                                                    // if it was a bonus
+                                                    if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                                        currentChar.maxHP += Number(cmd.split(" ")[3]);
+                                                        currentChar.HP    += Number(cmd.split(" ")[3]);
+                                                    }
+                                                    // if it was a static value
+                                                    else {
+                                                        currentChar.maxHP = Number(cmd.split(" ")[3]);
+                                                        currentChar.HP    = Number(cmd.split(" ")[3]);
+                                                    }
+                                                    break;
+
+                                                case "stamina":
+                                                case "stam":
+                                                    // if it was a bonus
+                                                    if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
+                                                        currentChar.maxStamina += Number(cmd.split(" ")[3]);
+                                                        currentChar.Stamina    += Number(cmd.split(" ")[3]);
+                                                    }
+                                                    // if it was a static value
+                                                    else {
+                                                        currentChar.maxStamina = Number(cmd.split(" ")[3]);
+                                                        currentChar.Stamina    = Number(cmd.split(" ")[3]);
+                                                    }
+                                                    break;
+                                                    break;
+                                            }
+                                        }
+                                    );
+                                    break;
+                            }
+                            break;
+
                         default:
-                            // se foi uma rolagem de attributo, e o usuário tem um personagem do "OL-FB" ativo
-                            if (users[id].chars[curChar].system === "Open Legend - Fantasy Battle") {
+                            // se foi uma rolagem de attributo
+                            if (currentChar.system === "Open Legend - Fantasy Battle") {
                                 let bonus = 0;
                                 FB.useAttribute(cmd.split(" ")[1].toLowerCase(),
                                 // if if is an attribute roll, roll it.
@@ -580,7 +1047,7 @@ bot.on('message', (message) => {
                                                 bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                         }
                                         // roll the attribute
-                                        str += FB.rollAttribute(users[id].chars[curChar][Attribute] + bonus);
+                                        str += FB.rollAttribute(currentChar[Attribute] + bonus);
                                     },
                                 // if if isn't
                                     (invAtt) => {
@@ -593,9 +1060,10 @@ bot.on('message', (message) => {
                 }
                 
                 // se foi uma rolagem de attributo
-                if (users[id].chars[users[id].activeCharId].system === "Open Legend - Fantasy Battle") {
+                if (users[id].hasOwnProperty("activeCharId") && users[id].chars[users[id].activeCharId].system === "Open Legend - Fantasy Battle") {
                     
                     let bonus = 0;
+                    actChar = users[id].chars[users[id].activeCharId];  // active char
                     FB.useAttribute(cmd.split(" ")[0].toLowerCase(),
                     // if if is an attribute roll, roll it.
                         (Attribute) => {
@@ -609,7 +1077,7 @@ bot.on('message', (message) => {
                                     bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                             }
                             // roll the attribute
-                            str += FB.rollAttribute(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                            str += FB.rollAttribute(actChar[Attribute] + bonus);
                         },
                     // if if isn't, do nothing
                         (invAtt) => {}
@@ -719,8 +1187,8 @@ bot.on('message', (message) => {
                         case "fantasy battle":
                         case "open legend":
                             users[id].chars[users[id].chars.length-1].system = "Open Legend - Fantasy Battle";
-                            message.author.send("Seu personagem é do sistema \"Open Legend - Fantasy Battle\", então. Quanto de HP seu personagem tem?");
-                            users[id].chars[users[id].chars.length-1].step = "OL: HP setting";
+                            message.author.send("Seu personagem é do sistema \"Open Legend - Fantasy Battle\", então. Qual o level de "+ users[id].chars[users[id].chars.length-1].name +"?");
+                            users[id].chars[users[id].chars.length-1].step = "OL: leveling";
                             break;
                         
                         default:
@@ -729,44 +1197,36 @@ bot.on('message', (message) => {
                     }
                     break;
                 
-                case "OL: HP setting":
+                case "OL: leveling":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].maxHP = Number(/[0-9]+/.exec(message.content)[0]);
-                        users[id].chars[users[id].chars.length-1].HP    = Number(/[0-9]+/.exec(message.content)[0]);
-                        let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].HP
-                                + " de HP máximo. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de MP(Mana) máximo?";
-                        users[id].chars[users[id].chars.length-1].step = "OL: MP setting";
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Level = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Level = Number(/[0-9]+/.exec(message.content)[0]);
+                        let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" é Level "+ users[id].chars[users[id].chars.length-1].Level
+                                + ". Agora nós vamos cuidar dos Attributos do seu Personagem. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
+                                users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
                         message.author.send(msg);
-                    } 
+                    }
                     // if the response was not a number
                     else {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Qual o HP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Agilidade "+ users[id].chars[users[id].chars.length-1].name +" tem?";
                         message.author.send(msg);
                     }
                     break;
-                    
-                case "OL: MP setting":
-                // if the response was a number
-                if (/[0-9]+/.test(message.content)) {
-                    users[id].chars[users[id].chars.length-1].maxMP = Number(/[0-9]+/.exec(message.content)[0]);
-                    users[id].chars[users[id].chars.length-1].MP    = Number(/[0-9]+/.exec(message.content)[0]);
-                    let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].MP
-                            + " de MP máximo. Agora nós vamos cuidar dos Attributos do seu Personagem. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
-                    users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
-                    message.author.send(msg);
-                }
-                // if the response was not a number
-                else {
-                    let msg = "Isso não é um número. Aprenda a digitar números. Qual o MP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
-                    message.author.send(msg);
-                }
-                break;
-                
+
                 case "OL: stating Agi":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Agility = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Agility = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Agility = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Agility
                                 + " de Agilidade. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Fortitude?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating For";
@@ -782,7 +1242,12 @@ bot.on('message', (message) => {
                 case "OL: stating For":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Fortitude = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Fortitude = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Fortitude = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Fortitude
                                 + " de Fortitude. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Might/Força?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Mig";
@@ -798,7 +1263,12 @@ bot.on('message', (message) => {
                 case "OL: stating Mig":
                      // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Might = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Might = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Might = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Might
                                 + " de Might. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Learning/Aprendizado?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Lea";
@@ -814,7 +1284,12 @@ bot.on('message', (message) => {
                 case "OL: stating Lea":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Learning = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Learning = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Learning = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Learning
                                 + " de Learning. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Logic/Lógica?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Log";
@@ -830,7 +1305,12 @@ bot.on('message', (message) => {
                 case "OL: stating Log":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Logic = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Logic = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Logic = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Logic
                                 + " de Logic. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Perception/Percepção?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Perc";
@@ -846,7 +1326,12 @@ bot.on('message', (message) => {
                 case "OL: stating Perc":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Perception = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Perception = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Perception = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Perception
                                 + " de Perception. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Will/Vontade?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Will";
@@ -862,7 +1347,12 @@ bot.on('message', (message) => {
                 case "OL: stating Will":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Will = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Will = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Will = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Will
                                 + " de Will. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Deception/Decepção?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Dec";
@@ -878,7 +1368,12 @@ bot.on('message', (message) => {
                 case "OL: stating Dec":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Deception = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Deception = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Deception = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Deception
                                 + " de Deception. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Persuasion/Persuasão?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Pers";
@@ -894,7 +1389,12 @@ bot.on('message', (message) => {
                 case "OL: stating Pers":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Persuasion = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Persuasion = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Persuasion = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Persuasion
                                 + " de Persuasion. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Presence/Presença?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Prese";
@@ -910,7 +1410,12 @@ bot.on('message', (message) => {
                 case "OL: stating Prese":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Presence = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Presence = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Presence = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Presence
                                 + " de Presence. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Alteration/Alteração?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Alt";
@@ -926,7 +1431,12 @@ bot.on('message', (message) => {
                 case "OL: stating Alt":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Alteration = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Alteration = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Alteration = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Alteration
                                 + " de Alteration. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Creation/Criação?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Cre";
@@ -942,7 +1452,12 @@ bot.on('message', (message) => {
                 case "OL: stating Cre":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Creation = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Creation = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Creation = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Creation
                                 + " de Creation. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Energy/Energia?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Ene";
@@ -958,7 +1473,12 @@ bot.on('message', (message) => {
                 case "OL: stating Ene":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Energy = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Energy = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Energy = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Energy
                                 + " de Energy. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Entropy/Entropia?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Ent";
@@ -974,7 +1494,12 @@ bot.on('message', (message) => {
                 case "OL: stating Ent":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Entropy = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Entropy = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Entropy = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Entropy
                                 + " de Entropy. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Influence/Influência?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Inf";
@@ -990,7 +1515,12 @@ bot.on('message', (message) => {
                 case "OL: stating Inf":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Influence = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Influence = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Influence = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Influence
                                 + " de Influence. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Movement/Movimento?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Mov";
@@ -1006,7 +1536,12 @@ bot.on('message', (message) => {
                 case "OL: stating Mov":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Movement = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Movement = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Movement = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Movement
                                 + " de Movement. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Prescience/Presciência?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Presc";
@@ -1022,7 +1557,12 @@ bot.on('message', (message) => {
                 case "OL: stating Presc":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Prescience = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Prescience = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Prescience = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Prescience
                                 + " de Prescience. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Protection/Proteção?";
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Pro";
@@ -1038,7 +1578,12 @@ bot.on('message', (message) => {
                 case "OL: stating Pro":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].Protection = Number(/[0-9]+/.exec(message.content)[0]);
+                        // if negative number
+                        if (/- *[0-9]+/.test(message.content))
+                            users[id].chars[users[id].chars.length-1].Protection = -1*Number(/[0-9]+/.exec(message.content)[0]);
+                        // if positive
+                        else
+                            users[id].chars[users[id].chars.length-1].Protection = Number(/[0-9]+/.exec(message.content)[0]);
                         let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].Protection
                                 + " de Protection.";
                         message.author.send(msg);
@@ -1060,6 +1605,14 @@ bot.on('message', (message) => {
                         users[id].chars[users[id].chars.length-1].step = "complete";
                         delete users[id].isCreatingChar;
 
+                        // taking care of the character's max resources
+                        users[id].chars[users[id].chars.length-1].maxHP = FB.getMaxHP(users[id].chars[users[id].chars.length-1]);
+                        users[id].chars[users[id].chars.length-1].HP = users[id].chars[users[id].chars.length-1].maxHP;
+                        users[id].chars[users[id].chars.length-1].maxMP = FB.getMaxMP(users[id].chars[users[id].chars.length-1]);
+                        users[id].chars[users[id].chars.length-1].MP = users[id].chars[users[id].chars.length-1].maxMP;
+                        users[id].chars[users[id].chars.length-1].maxStamina = FB.getMaxStamina(users[id].chars[users[id].chars.length-1]);
+                        users[id].chars[users[id].chars.length-1].Stamina = users[id].chars[users[id].chars.length-1].maxStamina;
+
                         // se o usuário não tem personagem anterior, colocar novo personagem como ativo
                         if (users[id].chars.length === 1)
                             users[id].activeCharId = 0;
@@ -1072,7 +1625,10 @@ bot.on('message', (message) => {
                 default:
                     break;
             }
-        } else if (users[id].isChosingActiveChar) {
+        }
+        // se esta escolhendo o personagem ativo
+        else if (users[id].isChosingActiveChar) {
+            let curChar = users[id].chars[users[id].activeCharId];  // currently actyive char
             // if the response was not a number
             if (!/[0-9]+/.test(message.content)) {
                 message.author.send("Isso não é um número válido para as opções apresentadas. Aprenda a digitar números. Tente de novo.");
@@ -1081,32 +1637,34 @@ bot.on('message', (message) => {
             else {
                 // se é o personagem ativo atual
                 if (users[id].activeCharId === Number(/[0-9]+/.exec(message.content)[0]) - 1) {
-                    message.author.send(users[id].chars[users[id].activeCharId].name+" já é o personagem ativo.");
+                    message.author.send(curChar.name+" já é o personagem ativo.");
                     delete users[id].isChosingActiveChar;
                 }
                 // se é um personagem válido que não o atual
                 else {
                     users[id].possibleNewActiveCharID = Number(/[0-9]+/.exec(message.content)[0]) - 1;
                     users[id].isConfirmingNewActiveChar = true;
-                    message.author.send("Mudar personagem ativo de "+ users[id].chars[users[id].activeCharId].name
+                    message.author.send("Mudar personagem ativo de "+ curChar.name
                     +" para "+users[id].chars[users[id].possibleNewActiveCharID].name+"?");
                     delete users[id].isChosingActiveChar;
                 }
             }
-        } else if (users[id].isConfirmingNewActiveChar) {
+        }
+        // se esta confirmando um novo personagem ativo
+        else if (users[id].isConfirmingNewActiveChar) {
             // se quer mudar o personagem 
             if (message.content.toLowerCase().trim() === "yes" || message.content.toLowerCase().trim() === "y" ||
                 message.content.toLowerCase().trim() === "sim" || message.content.toLowerCase().trim() === "s") {
                 users[id].activeCharId = users[id].possibleNewActiveCharID;
                 delete users[id].possibleNewActiveCharID;
                 delete users[id].isConfirmingNewActiveChar;
-                message.author.send("Personagem ativo mudado para " + users[id].chars[users[id].activeCharId].name + ".");
+                message.author.send("Personagem ativo mudado para " + curChar.name + ".");
             }
             // se não quer mudar o personagem
             else {
                 delete users[id].possibleNewActiveCharID;
                 delete users[id].isConfirmingNewActiveChar;
-                message.author.send("Personagem ativo ("+ users[id].chars[users[id].activeCharId].name +") mantido");
+                message.author.send("Personagem ativo ("+ curChar.name +") mantido");
             }
         }
 
