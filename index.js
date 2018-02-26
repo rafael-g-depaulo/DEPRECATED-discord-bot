@@ -107,13 +107,13 @@ bot.on('message', (message) => {
                     if (char.length === 1) {
                         // se o personagem achado é o personagem ativo atualmente
                         if (char[0].id === users[id].activeCharId) {
-                            message.author.send(users[id].chars[users[id].activeCharId].name+" já é o personagem ativo.");
+                            message.author.send(actChar.name+" já é o personagem ativo.");
                         } else {
                             console.log(char[0].id);
                             console.log(users[id].activeCharId);
                             users[id].isConfirmingNewActiveChar = true;
                             users[id].possibleNewActiveCharID = char[0].id;
-                            message.author.send("Quer mudar seu personagem ativo de "+ users[id].chars[users[id].activeCharId].name +" para "+ char[0].name
+                            message.author.send("Quer mudar seu personagem ativo de "+ actChar.name +" para "+ char[0].name
                             +"? Por favor digite sim para confirmar, ou qualquer outra coisa para reverter a mudança");
                         }
                     }
@@ -160,35 +160,35 @@ bot.on('message', (message) => {
                     
                     let msg = "";
 
-                    switch (users[id].chars[users[id].activeCharId].system) {
+                    switch (actChar.system) {
                         case "Open Legend - Fantasy Battle":
-                            msg += "Seu personagem ativo é "+ users[id].chars[users[id].activeCharId].name + ". Seus stats são:\n\n"
+                            msg += "Seu personagem ativo é "+ actChar.name + ". Seus stats são:\n\n"
 
                             + "\t**Physical**:\n"
-                                +  "\t\tAgility: "    + users[id].chars[users[id].activeCharId].Agility     + "\n"
-                                +  "\t\tFortitude: "  + users[id].chars[users[id].activeCharId].Fortitude   + "\n"
-                                +  "\t\tMight: "      + users[id].chars[users[id].activeCharId].Might       + "\n\n"
+                                +  "\t\tAgility: "    + actChar.Agility     + "\n"
+                                +  "\t\tFortitude: "  + actChar.Fortitude   + "\n"
+                                +  "\t\tMight: "      + actChar.Might       + "\n\n"
                                 
                             + "\t**Mental**:\n"
-                                +  "\t\tLearning: "   + users[id].chars[users[id].activeCharId].Learning    + "\n"
-                                +  "\t\tLogic: "      + users[id].chars[users[id].activeCharId].Logic       + "\n"
-                                +  "\t\tPerception: " + users[id].chars[users[id].activeCharId].Perception  + "\n"
-                                +  "\t\tWill: "       + users[id].chars[users[id].activeCharId].Will        + "\n\n"
+                                +  "\t\tLearning: "   + actChar.Learning    + "\n"
+                                +  "\t\tLogic: "      + actChar.Logic       + "\n"
+                                +  "\t\tPerception: " + actChar.Perception  + "\n"
+                                +  "\t\tWill: "       + actChar.Will        + "\n\n"
                                 
                             + "\t**Social**:\n"
-                                +  "\t\tDeception: "  + users[id].chars[users[id].activeCharId].Deception   + "\n"
-                                +  "\t\tPersuasion: " + users[id].chars[users[id].activeCharId].Persuasion  + "\n"
-                                +  "\t\tPresence: "   + users[id].chars[users[id].activeCharId].Presence    + "\n\n"
+                                +  "\t\tDeception: "  + actChar.Deception   + "\n"
+                                +  "\t\tPersuasion: " + actChar.Persuasion  + "\n"
+                                +  "\t\tPresence: "   + actChar.Presence    + "\n\n"
                                 
                             + "\t**Supernatural**:\n"
-                                +  "\t\tAlteration: " + users[id].chars[users[id].activeCharId].Alteration  + "\n"
-                                +  "\t\tCreation: "   + users[id].chars[users[id].activeCharId].Creation    + "\n"
-                                +  "\t\tEnergy: "     + users[id].chars[users[id].activeCharId].Energy      + "\n"
-                                +  "\t\tEntropy: "    + users[id].chars[users[id].activeCharId].Entropy     + "\n"
-                                +  "\t\tInfluence: "  + users[id].chars[users[id].activeCharId].Influence   + "\n"
-                                +  "\t\tMovement: "   + users[id].chars[users[id].activeCharId].Movement    + "\n"
-                                +  "\t\tPrescience: " + users[id].chars[users[id].activeCharId].Prescience  + "\n"
-                                +  "\t\tProtection: " + users[id].chars[users[id].activeCharId].Protection;
+                                +  "\t\tAlteration: " + actChar.Alteration  + "\n"
+                                +  "\t\tCreation: "   + actChar.Creation    + "\n"
+                                +  "\t\tEnergy: "     + actChar.Energy      + "\n"
+                                +  "\t\tEntropy: "    + actChar.Entropy     + "\n"
+                                +  "\t\tInfluence: "  + actChar.Influence   + "\n"
+                                +  "\t\tMovement: "   + actChar.Movement    + "\n"
+                                +  "\t\tPrescience: " + actChar.Prescience  + "\n"
+                                +  "\t\tProtection: " + actChar.Protection;
 
                             message.author.send(msg);
                             break;
@@ -211,7 +211,7 @@ bot.on('message', (message) => {
                 // se a pessoa tem um personagem ativo, procurar um attributo para rolar
                 else {
                     // lidar com o personagem ativo de acordo com o sistema que ele usa
-                    switch (users[id].chars[users[id].activeCharId].system) {
+                    switch (actChar.system) {
                         // se o personagem é de Open Legend - Fantasy Battle
                         case "Open Legend - Fantasy Battle":
                             // se o usuário não entrou nenhum argumento, tratar como uma rolagem normal
@@ -237,7 +237,7 @@ bot.on('message', (message) => {
                                             bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
                                     }
 
-                                    str += FB.rollAttribute(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                                    str += FB.rollAttribute(actChar[Attribute] + bonus);
 
                                 }, (invAttribute) => {
                                     // if they are rolling for initiative.
@@ -254,7 +254,7 @@ bot.on('message', (message) => {
                                                 bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                         }
 
-                                        str += FB.rollInitiative(users[id].chars[users[id].activeCharId].Agility + bonus);
+                                        str += FB.rollInitiative(actChar.Agility + bonus);
                                     }
 
                                     // if they arent rolling for initiative, then they made a mistake
@@ -282,11 +282,11 @@ bot.on('message', (message) => {
                 }
 
                 // lidar com o personagem ativo de acordo com o sistema que ele usa
-                switch (users[id].chars[users[id].activeCharId].system) {
+                switch (actChar.system) {
                     case "Open Legend - Fantasy Battle":
                         // se o usuário não entrou nenhum argumento, usar o attributo padrão do personagem
                         if (cmd.split(" ").length == 1) {
-                            str += FB.rollDamage(users[id].chars[users[id].activeCharId][users[id].chars[users[id].activeCharId].attackAttribute]);
+                            str += FB.rollDamage(actChar[actChar.attackAttribute]);
                             break;
                         }
 
@@ -305,7 +305,7 @@ bot.on('message', (message) => {
                                     if (/\- *[0-9]+/.test(cmd))
                                         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                 }
-                                str += FB.rollDamage(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                                str += FB.rollDamage(actChar[Attribute] + bonus);
                             },
                             // se não foi um attributo válido
                             (invAttribute) => {
@@ -319,7 +319,7 @@ bot.on('message', (message) => {
                                     if (/\- *[0-9]+/.test(cmd))
                                         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
 
-                                    str += FB.rollDamage(users[id].chars[users[id].activeCharId][users[id].chars[users[id].activeCharId].attackAttribute] + bonus);
+                                    str += FB.rollDamage(actChar[actChar.attackAttribute] + bonus);
                                 }
                                 // se não é, comando invalido
                                 else
@@ -335,7 +335,7 @@ bot.on('message', (message) => {
             case "initiative":
             case "iniciativa":
 
-                str += FB.rollInitiative(users[id].chars[users[id].activeCharId].Agility);
+                str += FB.rollInitiative(actChar.Agility);
                 break;
 
             default:
@@ -416,7 +416,7 @@ bot.on('message', (message) => {
                         case 'rola':
                         case 'checa':
                             // lidar com o personagem ativo de acordo com o sistema que ele usa
-                            switch (users[id].chars[users[id].activeCharId].system) {
+                            switch (actChar.system) {
                                 // se o personagem é de Open Legend - Fantasy Battle
                                 case "Open Legend - Fantasy Battle":
                                     // se o usuário não entrou nenhum argumento, tratar como uma rolagem normal
@@ -505,7 +505,7 @@ bot.on('message', (message) => {
                 }
                 
                 // se foi uma rolagem de attributo
-                if (users[id].chars[users[id].activeCharId].system === "Open Legend - Fantasy Battle") {
+                if (actChar.system === "Open Legend - Fantasy Battle") {
                     
                     let bonus = 0;
                     FB.useAttribute(cmd.split(" ")[0].toLowerCase(),
@@ -521,7 +521,7 @@ bot.on('message', (message) => {
                                     bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
                             }
                             // roll the attribute
-                            str += FB.rollAttribute(users[id].chars[users[id].activeCharId][Attribute] + bonus);
+                            str += FB.rollAttribute(actChar[Attribute] + bonus);
                         },
                     // if if isn't, do nothing
                         (invAtt) => {}
@@ -987,14 +987,14 @@ bot.on('message', (message) => {
             else {
                 // se é o personagem ativo atual
                 if (users[id].activeCharId === Number(/[0-9]+/.exec(message.content)[0]) - 1) {
-                    message.author.send(users[id].chars[users[id].activeCharId].name+" já é o personagem ativo.");
+                    message.author.send(actChar.name+" já é o personagem ativo.");
                     delete users[id].isChosingActiveChar;
                 }
                 // se é um personagem válido que não o atual
                 else {
                     users[id].possibleNewActiveCharID = Number(/[0-9]+/.exec(message.content)[0]) - 1;
                     users[id].isConfirmingNewActiveChar = true;
-                    message.author.send("Mudar personagem ativo de "+ users[id].chars[users[id].activeCharId].name
+                    message.author.send("Mudar personagem ativo de "+ actChar.name
                     +" para "+users[id].chars[users[id].possibleNewActiveCharID].name+"?");
                     delete users[id].isChosingActiveChar;
                 }
@@ -1006,13 +1006,13 @@ bot.on('message', (message) => {
                 users[id].activeCharId = users[id].possibleNewActiveCharID;
                 delete users[id].possibleNewActiveCharID;
                 delete users[id].isConfirmingNewActiveChar;
-                message.author.send("Personagem ativo mudado para " + users[id].chars[users[id].activeCharId].name + ".");
+                message.author.send("Personagem ativo mudado para " + actChar.name + ".");
             }
             // se não quer mudar o personagem
             else {
                 delete users[id].possibleNewActiveCharID;
                 delete users[id].isConfirmingNewActiveChar;
-                message.author.send("Personagem ativo ("+ users[id].chars[users[id].activeCharId].name +") mantido");
+                message.author.send("Personagem ativo ("+ actChar.name +") mantido");
             }
         }
 
