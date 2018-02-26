@@ -21,7 +21,23 @@ let users = [];
 // on message to bot
 bot.on('message', (message) => {
     
+    // set up important variables
     let id = message.author.id;              // user id
+    
+    // se a info do usuário não está carregada, carregue-a em memória
+    if (!(id in users)) {
+        // se a pessoa não tem um arquivo
+        if (!fs.existsSync('users/'+message.author.id+'.json'))
+            fileIO.writeSync('users/'+message.author.id+'.json', '{}');
+
+        // get the users data from file
+        users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
+    }
+
+    // pegando o personagem ativo
+    let actChar;
+    if (users[id].hasOwnProperty("activeCharId"))
+        actChar = users[id].chars[users[id].activeCharId];
 
     // checando se foi um comando
     if (message.content.slice(0, 1) === '!') {
@@ -29,13 +45,6 @@ bot.on('message', (message) => {
         let str = "";                            // response string
 
         switch (cmd.split(" ")[0].toLowerCase()) {
-            case 'help':
-                str += "Bem vindo ao Slave-Bot 1.2. Os comandos disponíveis são: \n\n";
-                str += "\t!roll : rola um ou mais dados, no formato [num]d[num]. Dados \
-                também podem ter (des)vantagem, bonus positivos ou negativos, e explosão;\n";
-                str += "\t!sum : rola um ou mais dados, como !roll, e soma os resultados;";
-                break;
-
             case 'sum':
             case 'soma':
             case 'some':
@@ -47,16 +56,7 @@ bot.on('message', (message) => {
                 break;
 
             case 'createchar':
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
 
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
-                
                 // if already creating a character
                 if (users[id].isCreatingChar) {
                     message.author.send("Você já está no meio da criação de um personagem. Quer descartar esse personagem incompleto e criar outro?");
@@ -79,16 +79,6 @@ bot.on('message', (message) => {
                 break;
             
             case 'changeactivechar':
-                
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
-
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
 
                 // se a pessoa não tem personagens
                 if (!users[id].hasOwnProperty("chars") || users[id].chars.constructor !== Array
@@ -160,15 +150,6 @@ bot.on('message', (message) => {
                 break;
             
             case 'activechar':
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
-
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
 
                 // se o usuário não tem personagem ativo
                 if (!users[id].hasOwnProperty("activeCharId"))
@@ -218,15 +199,6 @@ bot.on('message', (message) => {
             case 'role':
             case 'rola':
             case 'checa':
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
-
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
     
                 // se a pessoa não tem um personagem ativo, tratar como uma rolagem normal
                 if (!users[id].hasOwnProperty("activeCharId")) {
@@ -302,15 +274,6 @@ bot.on('message', (message) => {
             case 'dano':
             case 'damage':
             case 'dmg':
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
-
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
 
                 // se o usuário não tem um pesonagem ativo, sair.
                 if (!users[id].hasOwnProperty("activeCharId")) {
@@ -372,61 +335,10 @@ bot.on('message', (message) => {
             case "initiative":
             case "iniciativa":
 
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
-
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
-
                 str += FB.rollInitiative(users[id].chars[users[id].activeCharId].Agility);
                 break;
 
-            case "mana":
-            case "mp":
-            case "hp":
-            case "stamina":
-                
-                // // se a info do usuário não está carregada, carregue-a em memória
-                // if (!(id in users)) {
-                //     // se a pessoa não tem um arquivo
-                //     if (!fs.existsSync('users/'+message.author.id+'.json'))
-                //         fileIO.writeSync('users/'+message.author.id+'.json', '{}');
-
-                //     // get the users data from file
-                //     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                // }
-
-                // // se o usuário não tem um personagem carregado, sair
-                // if (!users[id].hasOwnProperty("activeCharId"))
-                //     break;
-                
-                // // if user entered a bonus, add it
-                // if (/(\+|-) *[0-9]+/.test(cmd)) {
-                //     let bonus = 0;
-                //     // if it is a positive bonus
-                //     if (/\+ *[0-9]+/.test(cmd))
-                //         bonus = Number(/[0-9]+/.exec(cmd)[0]);
-                //     // if it is a negative bonus
-                //     if (/- *[0-9]+/.test(cmd))
-                //         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
-
-                //     users[id].chars[users[id].activeCharId].asdasdas += bonus;
-                // }
-
             default:
-                // se a info do usuário não está carregada, carregue-a em memória
-                if (!(id in users)) {
-                    // se a pessoa não tem um arquivo
-                    if (!fs.existsSync('users/'+message.author.id+'.json'))
-                        fileIO.writeSync('users/'+message.author.id+'.json', '{}');
-
-                    // get the users data from file
-                    users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-                }
 
                 // se está mexendo com um personagem diretamente
                 let curChar = false;
@@ -636,13 +548,7 @@ bot.on('message', (message) => {
     }
 
     // se é uma conversa com o bot
-    else if (fs.existsSync('users/'+message.author.id+'.json')) {
-
-        // se a info do usuário não está carregada, carregue-a em memória
-        if (!(id in users)) {
-            // get the users data from file
-            users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
-        }
+    else {
 
         // se está no processo de confirmação de parar o processo de criação de um personagem e começar outro
         if (users[id].resetCharCreationConfirm) {
