@@ -595,21 +595,21 @@ bot.on('message', (message) => {
                     break;
                     
                 case "OL: MP setting":
-                // if the response was a number
-                if (/[0-9]+/.test(message.content)) {
-                    users[id].chars[users[id].chars.length-1].maxMP = Number(/[0-9]+/.exec(message.content)[0]);
-                    users[id].chars[users[id].chars.length-1].MP    = Number(/[0-9]+/.exec(message.content)[0]);
-                    let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].MP
-                            + " de MP máximo. Agora nós vamos cuidar dos Attributos do seu Personagem. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
-                    users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
-                    message.author.send(msg);
-                }
-                // if the response was not a number
-                else {
-                    let msg = "Isso não é um número. Aprenda a digitar números. Qual o MP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
-                    message.author.send(msg);
-                }
-                break;
+                    // if the response was a number
+                    if (/[0-9]+/.test(message.content)) {
+                        users[id].chars[users[id].chars.length-1].maxMP = Number(/[0-9]+/.exec(message.content)[0]);
+                        users[id].chars[users[id].chars.length-1].MP    = Number(/[0-9]+/.exec(message.content)[0]);
+                        let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].MP
+                                + " de MP máximo. Agora nós vamos cuidar dos Attributos do seu Personagem. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
+                        users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
+                        message.author.send(msg);
+                    }
+                    // if the response was not a number
+                    else {
+                        let msg = "Isso não é um número. Aprenda a digitar números. Qual o MP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
+                        message.author.send(msg);
+                    }
+                    break;
                 
                 case "OL: stating Agi":
                     // if the response was a number

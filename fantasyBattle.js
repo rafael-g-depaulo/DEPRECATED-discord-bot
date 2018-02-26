@@ -389,19 +389,34 @@ exports.command = function(cmd, char) {
             msg += exports.rollAttribute(char[Attribute] + advBonus.bonus, advBonus.adv);
         }
     );
-    // if rolling "!initiative"
+    // if rolling "!initiative [advantage] [bonus]"
     else if (command === "initiative" || command === "iniciative" ||
              command === "iniciativa") {
         let advBonus = getAdvBonus(cmd);
         msg += exports.rollInitiative(char.Agility + advBonus.bonus, advBonus.adv);
     }
-    // if rolling "!damage [attribute]"
-
+    // if rolling "!damage [attribute] [advantage] [bonus]"
+    else if (command === "dmg"  || command === "damg" || command === "damag" ||
+             command === "dano" || command === "damage") {
+        exports.useAttribute(cmd.split(" ")[1].toLowerCase(),
+        // if there is an attribute, use it
+            (Attribute) => {
+                let advBonus = getAdvBonus(cmd);
+                msg += exports.rollDamage(char[Attribute] + advBonus.bonus, advBonus.adv);
+            },
+        // if there isn't an attribute, use the character's attack attribute
+            () => {
+                let advBonus = getAdvBonus(cmd);
+                msg += exports.rollDamage(char[char.attackAttribute] + advBonus.bonus, advBonus.adv);
+            }
+        );
+    }
     // if it wasn't a valid command, return false
     else {
         return false;
     }
-    
+
+    return msg;
 }
 
 const getAdvBonus = function(cmd) {
@@ -464,6 +479,8 @@ const getAdvBonus = function(cmd) {
         bonus: bonus
     };
 }
+
+exports.getAdvBonus = getAdvBonus;
 
 // setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
 const Agility = [
@@ -677,8 +694,9 @@ const Protection = [
 /**
  * @typedef Character
  * 
- * @property {String} name
- * @property {String} system
+ * @property {string} name
+ * @property {string} system
+ * @property {string} attackAttribute
  * 
  * @property {number} Level
  * 
