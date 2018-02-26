@@ -13,35 +13,38 @@ const Dice = require('./dice.js');
  * 
  * @returns returns the dice roll for the attribute
  */
-exports.rollAttribute = function (attribute) {
+exports.rollAttribute = function (attribute, adv) {
+    adv = adv || 0;
     return Dice.rollDice(
         [{
             diceQnt: 1,
             diceMax: 20,
-            diceAdv: 0,
+            diceAdv: adv,
             diceBonus: 2 * attribute,
             explode: false
         }],
         false, true, false);
 }
 
-exports.rollInitiative = function (agility) {
+exports.rollInitiative = function (agility, adv) {
+    adv = adv || 0;
     return Dice.rollDice(
         [{
             diceQnt: 1,
             diceMax: 20,
-            diceAdv: 0,
+            diceAdv: adv,
             diceBonus: agility,
             explode: false
         }],
         false, true, false);
 }
 
-exports.rollDamage = function (attribute) {
+exports.rollDamage = function (attribute, adv) {
+    adv = adv || 0;
 
     // set up dice to roll
     let dice = {};
-    dice.diceAdv = 0;
+    dice.diceAdv = adv;
     dice.diceBonus = 0;
     dice.explode = true;
 
@@ -149,6 +152,9 @@ exports.rollDamage = function (attribute) {
  * @returns {Boolean} returns true if att is a valid attribute, false if not
  */
 exports.useAttribute = function (att, ifValid, ifInvalid) {
+    ifValid = ifValid || (() => {});
+    ifInvalid = ifInvalid || (() => {});
+
     switch (att) {
         case "agi":
         case "agility":
@@ -364,6 +370,143 @@ exports.getMaxStamina = function(char) {
 }
 
 /**
+ * @description tests if a string is a valid command for OL: FB. if yes, take care of it. if no, returns false.
+ * 
+ * @param {string} cmd          command string 
+ * @param {Character} char      character 
+ * 
+ * @returns {string|boolean}    Either a string of the resolved command, or false if no valid command
+ */
+exports.command = function(cmd, char) {
+// setting up the return message, and first word of command
+    let msg = "", command = cmd.split(" ")[0].toLowerCase();
+
+// testing for commands
+    // if rolling "!attribute"
+    if (exports.useAttribute(cmd.split(" ")[0]),
+        (Attribute) => {
+        // try to get advantage (oh god why am i doing this)
+            let advantageWords = Dice.getAdvWords().adv,
+                disadvantageWords = Dice.getAdvWords().dis;
+            let advRegStr = "(";
+            for (i in advantageWords) {
+                if (i != 0)
+                    advRegStr += "|";
+                advRegStr += advantageWords[i];
+            }
+            advRegStr += ") *(\\++|-+)? *[0-9]*";
+            let advRegExp = new RegExp(advRegStr, "i");
+            let disRegStr = "(";
+            for (i in disadvantageWords) {
+                if (i != 0)
+                    disRegStr += "|";
+                    disRegStr += disadvantageWords[i];
+            }
+            disRegStr += ") *(\\++|-+)? *[0-9]*";
+            let disRegExp = new RegExp(disRegStr, "i");
+
+            let adv = 0;
+            // if there is positiva advantage
+            if (advRegExp.test(cmd)) {
+                let advStr = advRegExp.exec(cmd)[0];
+                if (/- *[0-9]+/.test(advStr))
+                    adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                else if (/\+ *[0-9]+/.test(advStr))
+                    adv =      Number(/[0-9]+/.exec(cmd)[0]);
+                else
+                    adv = 1;
+            }
+            // if there is negative advantage
+            else if (disRegExp.test(cmd)) {
+                let advStr = disRegExp.exec(cmd)[0];
+                if (/[0-9]+/.test(advStr))
+                    adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                else
+                    adv = -1;
+            }
+        // get bonus
+            let bonus = 0;
+            if (/(\+|-) *[0-9]+/.test(cmd)) {
+                // if the bonus is positive
+                if (/\+ *[0-9]+/.test(cmd))
+                    bonus = Number(/[0-9]+/.exec(cmd)[0]);
+                // if the bonus is negative
+                if (/\- *[0-9]+/.test(cmd))
+                    bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
+            }
+            msg += exports.rollAttribute(char[Attribute] + bonus, adv);
+        }
+    );
+    // if rolling "!initiative"
+    else if (command === "initiative" || command === "iniciative" ||
+             command === "iniciativa") {
+        
+    }
+    // if it wasn't a valid command, return false
+    else {
+        return false;
+    }
+    
+}
+
+const getAdvBonus = function(cmd) {
+    // try to get advantage (oh god why am i doing this)
+    let advantageWords = Dice.getAdvWords().adv,
+        disadvantageWords = Dice.getAdvWords().dis;
+    let advRegStr = "(";
+    for (i in advantageWords) {
+        if (i != 0)
+            advRegStr += "|";
+        advRegStr += advantageWords[i];
+    }
+    advRegStr += ") *(\\++|-+)? *[0-9]*";
+    let advRegExp = new RegExp(advRegStr, "i");
+    let disRegStr = "(";
+    for (i in disadvantageWords) {
+        if (i != 0)
+            disRegStr += "|";
+            disRegStr += disadvantageWords[i];
+    }
+    disRegStr += ") *(\\++|-+)? *[0-9]*";
+    let disRegExp = new RegExp(disRegStr, "i");
+
+    let adv = 0;
+    // if there is positiva advantage
+    if (advRegExp.test(cmd)) {
+        let advStr = advRegExp.exec(cmd)[0];
+        if (/- *[0-9]+/.test(advStr))
+            adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+        else if (/\+ *[0-9]+/.test(advStr))
+            adv =      Number(/[0-9]+/.exec(cmd)[0]);
+        else
+            adv = 1;
+    }
+    // if there is negative advantage
+    else if (disRegExp.test(cmd)) {
+        let advStr = disRegExp.exec(cmd)[0];
+        if (/[0-9]+/.test(advStr))
+            adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+        else
+            adv = -1;
+    }
+    // get bonus
+    let bonus = 0;
+    if (/(\+|-) *[0-9]+/.test(cmd)) {
+        // if the bonus is positive
+        if (/\+ *[0-9]+/.test(cmd))
+            bonus = Number(/[0-9]+/.exec(cmd)[0]);
+        // if the bonus is negative
+        if (/\- *[0-9]+/.test(cmd))
+            bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
+    }
+
+    return {
+        adv: adv,
+        bonus: bonus
+    };
+}
+
+/**
  * @typedef Resource
  * 
  * @property {number} Base       base/bonus of the resource
@@ -399,6 +542,9 @@ exports.getMaxStamina = function(char) {
 
 /**
  * @typedef Character
+ * 
+ * @property {String} name
+ * @property {String} system
  * 
  * @property {number} Level
  * 

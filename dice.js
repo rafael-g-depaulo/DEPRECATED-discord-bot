@@ -195,7 +195,6 @@ exports.rollDice = function(diceArgs, list, sum, sumRes) {
  * @returns {RollResults}
  */
 const rollDie = function(die) {
-
 // roll the dice
     let numRolls = [];
     for (let i = 0; i < die.diceQnt + Math.abs(die.diceAdv); i++)
@@ -509,4 +508,17 @@ const getAdvantage = function(args) {
     }
 
     return advantage
+}
+
+/**
+ * @description returns the word lists used for advantage and disadvantage
+ * 
+ * @returns {{adv: string[], dis: string[]}}
+ * 
+*/
+exports.getAdvWords = function() {
+    return {
+        adv: advantageWords,
+        dis: disadvantageWords
+    };
 }

@@ -210,64 +210,6 @@ bot.on('message', (message) => {
                 }
                 // se a pessoa tem um personagem ativo, procurar um attributo para rolar
                 else {
-                    // lidar com o personagem ativo de acordo com o sistema que ele usa
-                    switch (actChar.system) {
-                        // se o personagem é de Open Legend - Fantasy Battle
-                        case "Open Legend - Fantasy Battle":
-                            // se o usuário não entrou nenhum argumento, tratar como uma rolagem normal
-                            if (cmd.split(" ").length < 2) {
-                                let rollArgs = Dice.getDiceRoll(cmd);
-                                let rollResult = Dice.rollDice(rollArgs, list, sum, false);
-                                str += rollResult;
-                                break;
-                            }
-                            // se o usuário entrou algum argumento
-                            else {
-                                let bonus = 0;
-
-                                // if the user entered a valid attribute, roll 1d20 + 2*that attribute [+ bonus]
-                                FB.useAttribute(cmd.split(" ")[1].toLowerCase(), (Attribute) => {
-                                    // if there is a bonus, add it
-                                    if (/[0-9]+/.test(cmd)) {
-                                        // if the bonus is positive
-                                        if (/\+ *[0-9]+/.test(cmd))
-                                            bonus = Number(/[0-9]+/.exec(cmd)[0]);
-                                        // if the bonus is negative
-                                        if (/\- *[0-9]+/.test(cmd))
-                                            bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
-                                    }
-
-                                    str += FB.rollAttribute(actChar[Attribute] + bonus);
-
-                                }, (invAttribute) => {
-                                    // if they are rolling for initiative.
-                                    if (invAttribute === "initiative" ||
-                                        invAttribute === "iniciativa") {
-
-                                        // if there is a bonus, add it
-                                        if (/[0-9]+/.test(cmd)) {
-                                            // if the bonus is positive
-                                            if (/\+ *[0-9]+/.test(cmd))
-                                                bonus = Number(/[0-9]+/.exec(cmd)[0]);
-                                            // if the bonus is negative
-                                            if (/\- *[0-9]+/.test(cmd))
-                                                bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
-                                        }
-
-                                        str += FB.rollInitiative(actChar.Agility + bonus);
-                                    }
-
-                                    // if they arent rolling for initiative, then they made a mistake
-                                    else {
-                                        str += invAttribute + " não é um atributo válido. Aprenda a escrever.";
-                                    }
-                                });
-                            }
-                            break;
-
-                        default:
-                            break;
-                    }
                 }
                 break;
 
