@@ -194,6 +194,7 @@ exports.useAttribute = function (att, ifValid, ifInvalid) {
         case "perc":
         case "perce":
         case "percep":
+        case "percept":
         case "perception":
         case "percepcao":
         case "percepçao":

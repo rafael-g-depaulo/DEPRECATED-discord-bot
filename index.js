@@ -155,9 +155,15 @@ bot.on('message', (message) => {
 
                 // se não
                 } else {
+                    let foundChars = users[id].chars.reduce((prev, ele, i, chars) => {
+                        if (ele.name.toLowerCase().search(name) !== -1) {
+                            prev.push(ele);
+                        }
+                        return prev;
+                    }, []);
                     let msg = "Os personagens que você tem são: \n\n";
-                    for (let i = 0; i < users[id].foundChars.length; i++) {
-                        msg += "\t\t" + (1+i) + ") " + users[id].foundChars[i].name
+                    for (let i = 0; i < foundChars.length; i++) {
+                        msg += "\t\t" + (1+i) + ") " + foundChars[i].name
                         msg += "\n";
                     }
                     msg += "\nQual o número do personagem que você quer deixar ativo?"
@@ -187,6 +193,7 @@ bot.on('message', (message) => {
                 else {
                     
                     let msg = "";
+                    let actChar;
                     actChar = users[id].chars[users[id].activeCharId];  // active character
                     FB.getMaxHP(actChar);
 
@@ -255,6 +262,7 @@ bot.on('message', (message) => {
                 }
                 // se a pessoa tem um personagem ativo, procurar um attributo para rolar
                 else {
+                    let actChar;
                     actChar = users[id].chars[users[id].activeCharId];      // active character
                     // lidar com o personagem ativo de acordo com o sistema que ele usa
                     switch (actChar.system) {
@@ -345,6 +353,7 @@ bot.on('message', (message) => {
                 
 
                 // lidar com o personagem ativo de acordo com o sistema que ele usa
+                let actChar = users[id].chars[users[id].activeCharId];
                 switch (actChar.system) {
                     case "Open Legend - Fantasy Battle":
                         // se o usuário não entrou nenhum argumento, usar o attributo padrão do personagem
@@ -408,7 +417,12 @@ bot.on('message', (message) => {
                     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
                 }
 
-                str += FB.rollInitiative(actChar.Agility);
+                if (!users[id].hasOwnProperty("activeCharId"))
+                    break;
+                if (true) {
+                    let actChar = users[id].chars[users[id].activeCharId];
+                    str += FB.rollInitiative(actChar.Agility);
+                }
                 break;
 
             case "mana":
@@ -436,26 +450,40 @@ bot.on('message', (message) => {
                 if (!users[id].hasOwnProperty("activeCharId"))
                     break;
                 
-                // get active char
-                actChar = users[id].chars[users[id].activeCharId];
 
                 // if user entered a bonus, add it
                 let bonus = 0;
-                if (/(\+|-) *[0-9]+/.test(cmd)) {
+                if (/[0-9]+/.test(cmd)) {
+                    // get active char
+                    let actChar = users[id].chars[users[id].activeCharId];
+
+                    // let resource = false;
                     // if it is a positive bonus
                     if (/\+ *[0-9]+/.test(cmd))
                         bonus = Number(/[0-9]+/.exec(cmd)[0]);
                     // if it is a negative bonus
-                    if (/- *[0-9]+/.test(cmd))
+                    else if (/- *[0-9]+/.test(cmd))
                         bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                    // if it is a static number
+                    // else
+                    //     resource = Number(/[0-9]+/.exec(cmd)[0]);
 
                     // add bonus to correspondant resource
                     if (cmd.split(" ")[0].toLowerCase() === "mana" ||
                         cmd.split(" ")[0].toLowerCase() === "manapoints" ||
                         cmd.split(" ")[0].toLowerCase() === "mp") {
-                            actChar.MP += bonus;
-                            if (actChar.MP > actChar.maxMP)
-                                actChar.MP = actChar.maxMP;
+                            // if static value
+                            // if (!resource) {
+                            //     actChar.MP = resource;
+                            //     if (actChar.MP > actChar.maxMP)
+                            //         actChar.MP = actChar.maxMP;
+                            // }
+                            // if bonus
+                            // else {
+                                actChar.MP += bonus;
+                                if (actChar.MP > actChar.maxMP)
+                                    actChar.MP = actChar.maxMP;
+                            // }
                     }
                     else if (cmd.split(" ")[0].toLowerCase() === "hp" ||
                              cmd.split(" ")[0].toLowerCase() === "health" ||
@@ -464,9 +492,20 @@ bot.on('message', (message) => {
                              cmd.split(" ")[0].toLowerCase() === "vida" ||
                              cmd.split(" ")[0].toLowerCase() === "saúde" ||
                              cmd.split(" ")[0].toLowerCase() === "saude") {
-                                actChar.HP += bonus;
-                                if (actChar.HP > actChar.maxHP)
-                                    actChar.HP = actChar.maxHP;
+                                // get active char
+                                let actChar = users[id].chars[users[id].activeCharId];
+                                // if static value
+                                // if (!resource) {
+                                //     actChar.HP = resource;
+                                //     if (actChar.HP > actChar.maxHP)
+                                //         actChar.HP = actChar.maxHP;
+                                // }
+                                // if bonus
+                                // else {
+                                    actChar.HP += bonus;
+                                    if (actChar.HP > actChar.maxHP)
+                                        actChar.HP = actChar.maxHP;
+                                // }
                     }    
                 }
 
@@ -475,6 +514,8 @@ bot.on('message', (message) => {
                 if (cmd.split(" ")[0].toLowerCase() === "mana" ||
                     cmd.split(" ")[0].toLowerCase() === "manapoints" ||
                     cmd.split(" ")[0].toLowerCase() === "mp") {
+                        // get active char
+                        let actChar = users[id].chars[users[id].activeCharId];
                         str += "**" + actChar.name + "**:\n"
                         +  "\tMP:\t" + actChar.MP + " / " + actChar.maxMP;
                 }
@@ -486,6 +527,8 @@ bot.on('message', (message) => {
                          cmd.split(" ")[0].toLowerCase() === "vida" ||
                          cmd.split(" ")[0].toLowerCase() === "saúde" ||
                          cmd.split(" ")[0].toLowerCase() === "saude") {
+                            // get active char
+                            let actChar = users[id].chars[users[id].activeCharId];
                             str += "**" + actChar.name + "**:\n"
                             +  "\tHP:\t" + actChar.HP + " / " + actChar.maxHP;
                 }
@@ -503,8 +546,8 @@ bot.on('message', (message) => {
                 }
 
                 // if not in form "!override resource/Attribute number/bonus" or "!override char resource/Attribute number/bonus", break
-                if ((cmd.split(" ").length < 4 || !/(\+|-)? *[0-9]/.test(cmd.split(" ")[3])) &&
-                    (cmd.split(" ").length < 3 || !/(\+|-)? *[0-9]/.test(cmd.split(" ")[2]))) {
+                if ((cmd.split(" ").length < 4 || !/[0-9]/.test(cmd.split(" ")[3])) &&
+                    (cmd.split(" ").length < 3 || !/[0-9]/.test(cmd.split(" ")[2]))) {
                     str += "Comando inválido. Se certifique que está usando a forma \"!override (nome do personagem) (recurso/atributo) (novo valor/bonus a ser adicionado)\"";
                     break;
                 }
@@ -521,77 +564,82 @@ bot.on('message', (message) => {
 
                 // if no character found, use active character
                 if (charId === -1) {
-                    actChar = users[id].chars[users[id].activeCharId];    // active character
-                    // test if in form "!override resource/Attribute number/bonus". if not, break
-                    if (cmd.split(" ").length >= 3 && /(\+|-)? *[0-9]/.test(cmd.split(" ")[2])) {
-                        // check what should be changed, and change it
-                        FB.useAttribute(cmd.split(" ")[1].toLowerCase(),
-                            // if changing attribute
-                            (Attribute) => {
-                                // if it was a bonus
-                                if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2]))
-                                    actChar[Attribute] += Number(cmd.split(" ")[2]);
-                                // if it was a static value
-                                else
-                                    actChar[Attribute] = Number(cmd.split(" ")[2]);
-                            },
-                            // if not attribute, check if it was a resource
-                            (invAttribute) => {
-                                // check if it was a valid resource
-                                switch (invAttribute) {
-                                    case "mana":
-                                    case "maxmana":
-                                    case "manapoints":
-                                    case "mp":
-                                    case "maxmp":
-                                        // if it was a bonus
-                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2])) {
-                                            actChar.maxMP += Number(cmd.split(" ")[2]);
-                                            actChar.MP    += Number(cmd.split(" ")[2]);
-                                        }
-                                        // if it was a static value
-                                        else {
-                                            actChar.maxMP = Number(cmd.split(" ")[2]);
-                                            actChar.MP    = Number(cmd.split(" ")[2]);
-                                        }
-                                        break;
+                    let actChar = users[id].chars[users[id].activeCharId];    // active character
 
-                                    case "health":
-                                    case "hp":
-                                    case "healthpoints":
-                                    case "hitpoints":
-                                        // if it was a bonus
-                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2])) {
-                                            actChar.maxHP += Number(cmd.split(" ")[2]);
-                                            actChar.HP    += Number(cmd.split(" ")[2]);
-                                        }
+                    // treat character accordinly to their system
+                    switch (actChar.system) {
+                        case "Open Legend - Fantasy Battle":
+                            // test if in form "!override resource/Attribute number/bonus". if not, break
+                            if (cmd.split(" ").length >= 3 && /[0-9]/.test(cmd.split(" ")[2])) {
+                                // check what should be changed, and change it
+                                FB.useAttribute(cmd.split(" ")[1].toLowerCase(),
+                                    // if changing attribute
+                                    (Attribute) => {
+                                        // if it was a positive bonus
+                                        if (/\+ *[0-9]+/.test(cmd.split(" ")[2]))
+                                            actChar[Attribute] += Number(/[0-9]+/.exec(cmd)[0]);
+                                        // if it was a negative bonus
+                                        if (/- *[0-9]+/.test(cmd.split(" ")[2]))
+                                            actChar[Attribute] += -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                         // if it was a static value
-                                        else {
-                                            actChar.maxHP = Number(cmd.split(" ")[2]);
-                                            actChar.HP    = Number(cmd.split(" ")[2]);
+                                        else
+                                            actChar[Attribute] = Number(/[0-9]+/.exec(cmd)[0]);
+                                    },
+                                    // if not attribute, check if it was a resource
+                                    (invAttribute) => {
+                                        // check if it was a valid resource
+                                        switch (invAttribute) {
+                                            case "mana":
+                                            case "maxmana":
+                                            case "manapoints":
+                                            case "mp":
+                                            case "maxmp":
+                                                // if it was a positive bonus
+                                                if (/\+ *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                    actChar.maxMP += Number(/[0-9]+/.exec(cmd)[0]);
+                                                    actChar.MP    += Number(/[0-9]+/.exec(cmd)[0]);
+                                                }
+                                                // if it was a negative bonus
+                                                if (/- *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                    actChar.maxMP += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                                    actChar.MP    += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                                }
+                                                // if it was a static value
+                                                else {
+                                                    actChar.maxMP += Number(/[0-9]+/.exec(cmd)[0]);
+                                                    actChar.MP    += Number(/[0-9]+/.exec(cmd)[0]);
+                                                }
+                                                break;
+        
+                                            case "health":
+                                            case "hp":
+                                            case "healthpoints":
+                                            case "hitpoints":
+                                                // if it was a positive bonus
+                                                if (/\+ *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                    actChar.maxHP += Number(/[0-9]+/.exec(cmd)[0]);
+                                                    actChar.HP    += Number(/[0-9]+/.exec(cmd)[0]);
+                                                }
+                                                // if it was a negative bonus
+                                                if (/- *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                    actChar.maxHP += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                                    actChar.HP    += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                                }
+                                                // if it was a static value
+                                                else {
+                                                    actChar.maxHP = Number(/[0-9]+/.exec(cmd)[0]);
+                                                    actChar.HP    = Number(/[0-9]+/.exec(cmd)[0]);
+                                                }
+                                                break;
                                         }
-                                        break;
-
-                                    case "stamina":
-                                    case "stam":
-                                        // if it was a bonus
-                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[2])) {
-                                            actChar.maxStamina += Number(cmd.split(" ")[2]);
-                                            actChar.Stamina    += Number(cmd.split(" ")[2]);
-                                        }
-                                        // if it was a static value
-                                        else {
-                                            actChar.maxStamina = Number(cmd.split(" ")[2]);
-                                            actChar.Stamina    = Number(cmd.split(" ")[2]);
-                                        }
-                                        break;
-                                }
+                                    }
+                                );
                             }
-                        );
-                    }
-                    // if not in valid form
-                    else {
-                        str += "Personagem inválido/inexistente. Tente de novo.";
+                            // if not in valid form
+                            else {
+                                str += "Personagem inválido/inexistente. Tente de novo.";
+                            }
+                            break;
                     }
                     break;
                 }
@@ -599,17 +647,26 @@ bot.on('message', (message) => {
                 // if character found
                 else {
                     // test if in form "!override character resource/Attribute number/bonus". if not, break
-                    if (cmd.split(" ").length >= 4 && /(\+|-)? *[0-9]/.test(cmd.split(" ")[3])) {
+                    if (cmd.split(" ").length >= 4 && /[0-9]/.test(cmd)) {
                         // check what should be changed, and change it
                         FB.useAttribute(cmd.split(" ")[2].toLowerCase(),
                             // if changing attribute
                             (Attribute) => {
-                                // if it was a bonus
-                                if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3]))
-                                    users[id].chars[charId][Attribute] += Number(cmd.split(" ")[3]);
+                                // if it was a positive bonus
+                                if (/\+ *[0-9]+/.test(cmd)) {
+                                    users[id].chars[charId][Attribute] += Number(/[0-9]+/.exec(cmd)[0]);
+                                    users[id].chars[charId][Attribute] += Number(/[0-9]+/.exec(cmd)[0]);
+                                }
+                                // if it was a negative bonus
+                                if (/- *[0-9]+/.test(cmd)) {
+                                    users[id].chars[charId][Attribute] += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                    users[id].chars[charId][Attribute] += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                }
                                 // if it was a static value
-                                else
-                                    users[id].chars[charId][Attribute] = Number(cmd.split(" ")[3]);
+                                else {
+                                    users[id].chars[charId][Attribute] = Number(/[0-9]+/.exec(cmd)[0]);
+                                    users[id].chars[charId][Attribute] = Number(/[0-9]+/.exec(cmd)[0]);
+                                }
                             },
                             // if not attribute, check if it was a resource
                             (invAttribute) => {
@@ -620,15 +677,20 @@ bot.on('message', (message) => {
                                     case "manapoints":
                                     case "mp":
                                     case "maxmp":
-                                        // if it was a bonus
-                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
-                                            users[id].chars[charId].maxMP += Number(cmd.split(" ")[3]);
-                                            users[id].chars[charId].MP    += Number(cmd.split(" ")[3]);
+                                        // if it was a positive bonus
+                                        if (/\+ *[0-9]+/.test(cmd)) {
+                                            users[id].chars[charId].maxMP += Number(/[0-9]+/.exec(cmd)[0]);
+                                            users[id].chars[charId].MP    += Number(/[0-9]+/.exec(cmd)[0]);
+                                        }
+                                        // if it was a negative bonus
+                                        if (/- *[0-9]+/.test(cmd)) {
+                                            users[id].chars[charId].maxMP += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                            users[id].chars[charId].MP    += -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                         }
                                         // if it was a static value
                                         else {
-                                            users[id].chars[charId].maxMP = Number(cmd.split(" ")[3]);
-                                            users[id].chars[charId].MP    = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].maxMP = Number(/[0-9]+/.exec(cmd)[0]);
+                                            users[id].chars[charId].MP    = Number(/[0-9]+/.exec(cmd)[0]);
                                         }
                                         break;
 
@@ -636,31 +698,23 @@ bot.on('message', (message) => {
                                     case "hp":
                                     case "healthpoints":
                                     case "hitpoints":
-                                        // if it was a bonus
-                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
-                                            users[id].chars[charId].maxHP += Number(cmd.split(" ")[3]);
-                                            users[id].chars[charId].HP    += Number(cmd.split(" ")[3]);
+                                        // if it was a positive bonus
+                                        if (/\+ *[0-9]+/.test(cmd)) {
+                                            users[id].chars[charId].maxHP += Number(/[0-9]+/.exec(cmd)[0]);
+                                            users[id].chars[charId].HP    += Number(/[0-9]+/.exec(cmd)[0]);
+                                        }
+                                        // if it was a negative bonus
+                                        if (/- *[0-9]+/.test(cmd)) {
+                                            users[id].chars[charId].maxHP += -1 * Number(/[0-9]+/.exec(cmd)[0]);
+                                            users[id].chars[charId].HP    += -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                         }
                                         // if it was a static value
                                         else {
-                                            users[id].chars[charId].maxHP = Number(cmd.split(" ")[3]);
-                                            users[id].chars[charId].HP    = Number(cmd.split(" ")[3]);
+                                            users[id].chars[charId].maxHP = Number(/[0-9]+/.exec(cmd)[0]);
+                                            users[id].chars[charId].HP    = Number(/[0-9]+/.exec(cmd)[0]);
                                         }
                                         break;
 
-                                    case "stamina":
-                                    case "stam":
-                                        // if it was a bonus
-                                        if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
-                                            users[id].chars[charId].maxStamina += Number(cmd.split(" ")[3]);
-                                            users[id].chars[charId].Stamina    += Number(cmd.split(" ")[3]);
-                                        }
-                                        // if it was a static value
-                                        else {
-                                            users[id].chars[charId].maxStamina = Number(cmd.split(" ")[3]);
-                                            users[id].chars[charId].Stamina    = Number(cmd.split(" ")[3]);
-                                        }
-                                        break;
                                     default:
                                         str += "Atributo/recurso inválido ou nexistente. Tente de novo, mas se esforce dessa vez";
                                         break;
@@ -668,6 +722,7 @@ bot.on('message', (message) => {
                             }
                         );
                     }
+                    // if not in form "!override character resource/Attribute number/bonus"
                     break;
                 }
 
@@ -754,6 +809,10 @@ bot.on('message', (message) => {
                     // get the users data from file
                     users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
                 }
+
+                // se não tem personagens, break
+                if (!users[id].hasOwnProperty("activeCharId"))
+                    break;
 
                 // se está mexendo com um personagem diretamente
                 let curChar = false;
@@ -952,7 +1011,7 @@ bot.on('message', (message) => {
                         case "override":
 
                             // if not in form "!char override resource/Attribute number/bonus", break
-                            if (cmd.split(" ").length < 4 || !/[0-9]/.test(cmd.split(" ")[3])) {
+                            if (cmd.split(" ").length < 4 || !/[0-9]/.test(cmd)) {
                                 str += "Comando inválido. Se certifique que está usando a forma \"!(nome do personagem) override (recurso/atributo) (novo valor/bonus a ser adicionado)\"";
                                 break;
                             }
@@ -965,12 +1024,15 @@ bot.on('message', (message) => {
                                     FB.useAttribute(cmd.split(" ")[2].toLowerCase(),
                                         // if changing attribute
                                         (Attribute) => {
-                                            // if it was a bonus
-                                            if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3]))
-                                                users[id].chars['charId'][Attribute] += Number(cmd.split(" ")[4]);
+                                            // if it was a positive bonus
+                                            if (/\+ *[0-9]+/.test(cmd.split(" ")[2]))
+                                                currentChar[Attribute] += Number(/[0-9]+/.exec(cmd)[0]);
+                                            // if it was a negative bonus
+                                            if (/- *[0-9]+/.test(cmd.split(" ")[2]))
+                                                currentChar[Attribute] += -1 * Number(/[0-9]+/.exec(cmd)[0]);
                                             // if it was a static value
                                             else
-                                            currentChar[Attribute] = Number(cmd.split(" ")[3]);
+                                                currentChar[Attribute] = Number(/[0-9]+/.exec(cmd)[0]);
                                         },
                                         // if not attribute, check if it was a resource
                                         (invAttribute) => {
@@ -981,15 +1043,20 @@ bot.on('message', (message) => {
                                                 case "manapoints":
                                                 case "mp":
                                                 case "maxmp":
-                                                    // if it was a bonus
-                                                    if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
-                                                        currentChar.maxMP += Number(cmd.split(" ")[3]);
-                                                        currentChar.MP    += Number(cmd.split(" ")[3]);
+                                                    // if it was a positive bonus
+                                                    if (/\+ *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                        currentChar.maxMP += Number(/[0-9]+/.exec(cmd)[0])
+                                                        currentChar.MP    += Number(/[0-9]+/.exec(cmd)[0])
+                                                    }
+                                                    // if it was a negative bonus
+                                                    if (/- *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                        currentChar.maxMP += -1 * Number(/[0-9]+/.exec(cmd)[0])
+                                                        currentChar.MP    += -1 * Number(/[0-9]+/.exec(cmd)[0])
                                                     }
                                                     // if it was a static value
                                                     else {
-                                                        currentChar.maxMP = Number(cmd.split(" ")[3]);
-                                                        currentChar.MP    = Number(cmd.split(" ")[3]);
+                                                        currentChar.maxMP = Number(/[0-9]+/.exec(cmd)[0]);
+                                                        currentChar.MP = Number(/[0-9]+/.exec(cmd)[0]);
                                                     }
                                                     break;
 
@@ -997,31 +1064,21 @@ bot.on('message', (message) => {
                                                 case "hp":
                                                 case "healthpoints":
                                                 case "hitpoints":
-                                                    // if it was a bonus
-                                                    if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
-                                                        currentChar.maxHP += Number(cmd.split(" ")[3]);
-                                                        currentChar.HP    += Number(cmd.split(" ")[3]);
+                                                    // if it was a positive bonus
+                                                    if (/\+ *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                        currentChar.maxHP += Number(/[0-9]+/.exec(cmd)[0])
+                                                        currentChar.HP    += Number(/[0-9]+/.exec(cmd)[0])
+                                                    }
+                                                    // if it was a negative bonus
+                                                    if (/- *[0-9]+/.test(cmd.split(" ")[2])) {
+                                                        currentChar.maxHP += -1 * Number(/[0-9]+/.exec(cmd)[0])
+                                                        currentChar.HP    += -1 * Number(/[0-9]+/.exec(cmd)[0])
                                                     }
                                                     // if it was a static value
                                                     else {
-                                                        currentChar.maxHP = Number(cmd.split(" ")[3]);
-                                                        currentChar.HP    = Number(cmd.split(" ")[3]);
+                                                        currentChar.maxHP = Number(/[0-9]+/.exec(cmd)[0]);
+                                                        currentChar.HP = Number(/[0-9]+/.exec(cmd)[0]);
                                                     }
-                                                    break;
-
-                                                case "stamina":
-                                                case "stam":
-                                                    // if it was a bonus
-                                                    if (/(\+|-) *[0-9]+/.test(cmd.split(" ")[3])) {
-                                                        currentChar.maxStamina += Number(cmd.split(" ")[3]);
-                                                        currentChar.Stamina    += Number(cmd.split(" ")[3]);
-                                                    }
-                                                    // if it was a static value
-                                                    else {
-                                                        currentChar.maxStamina = Number(cmd.split(" ")[3]);
-                                                        currentChar.Stamina    = Number(cmd.split(" ")[3]);
-                                                    }
-                                                    break;
                                                     break;
                                             }
                                         }
@@ -1058,11 +1115,56 @@ bot.on('message', (message) => {
                             break;
                     }
                 }
+                // if just "!character", show character's attributes
+                    else if (curChar !== false && cmd.split(" ").length === 1) {let msg = "";
+                    actChar = users[id].chars[users[id].activeCharId];  // active character
+                    FB.getMaxHP(actChar);
+
+                    switch (actChar.system) {
+                        case "Open Legend - Fantasy Battle":
+                            msg += "Seu personagem ativo é "+ actChar.name + ". Seus stats são:\n\n"
+
+                            + "**Hit Points(HP)**:\t\t\t" + actChar.HP        + " / "
+                                + actChar.maxHP + "\n"
+                            + "**Mana Points(MP)**:\t\t" + actChar.MP        + " / "
+                                + actChar.maxMP + "\n\n"
+
+                            + "\t**Physical**:\n"
+                                +  "\t\tAgility: "    + actChar.Agility     + "\n"
+                                +  "\t\tFortitude: "  + actChar.Fortitude   + "\n"
+                                +  "\t\tMight: "      + actChar.Might       + "\n\n"
+                                
+                            + "\t**Mental**:\n"
+                                +  "\t\tLearning: "   + actChar.Learning    + "\n"
+                                +  "\t\tLogic: "      + actChar.Logic       + "\n"
+                                +  "\t\tPerception: " + actChar.Perception  + "\n"
+                                +  "\t\tWill: "       + actChar.Will        + "\n\n"
+                                
+                            + "\t**Social**:\n"
+                                +  "\t\tDeception: "  + actChar.Deception   + "\n"
+                                +  "\t\tPersuasion: " + actChar.Persuasion  + "\n"
+                                +  "\t\tPresence: "   + actChar.Presence    + "\n\n"
+                                
+                            + "\t**Supernatural**:\n"
+                                +  "\t\tAlteration: " + actChar.Alteration  + "\n"
+                                +  "\t\tCreation: "   + actChar.Creation    + "\n"
+                                +  "\t\tEnergy: "     + actChar.Energy      + "\n"
+                                +  "\t\tEntropy: "    + actChar.Entropy     + "\n"
+                                +  "\t\tInfluence: "  + actChar.Influence   + "\n"
+                                +  "\t\tMovement: "   + actChar.Movement    + "\n"
+                                +  "\t\tPrescience: " + actChar.Prescience  + "\n"
+                                +  "\t\tProtection: " + actChar.Protection;
+
+                            message.author.send(msg);
+                            break;
+                    }
+                }
                 
                 // se foi uma rolagem de attributo
                 if (users[id].hasOwnProperty("activeCharId") && users[id].chars[users[id].activeCharId].system === "Open Legend - Fantasy Battle") {
                     
                     let bonus = 0;
+                    let actChar;
                     actChar = users[id].chars[users[id].activeCharId];  // active char
                     FB.useAttribute(cmd.split(" ")[0].toLowerCase(),
                     // if if is an attribute roll, roll it.
@@ -1658,7 +1760,7 @@ bot.on('message', (message) => {
                 users[id].activeCharId = users[id].possibleNewActiveCharID;
                 delete users[id].possibleNewActiveCharID;
                 delete users[id].isConfirmingNewActiveChar;
-                message.author.send("Personagem ativo mudado para " + curChar.name + ".");
+                message.author.send("Personagem ativo mudado para " + users[id].chars[users[id].activeCharId].name + ".");
             }
             // se não quer mudar o personagem
             else {
