@@ -43,16 +43,37 @@ bot.on('message', (message) => {
     if (message.content.slice(0, 1) === '!') {
         const cmd = message.content.slice(1);    // shorthand for the entered command
         let str = "";                            // response string
+        let tempStr;                             // i as of now don't know what to name this. i checks for stuff and keeps information i want to send, and checks IFs
 
+        // check if has a character, and then if using a command involving a RPG system
+        if (users[id].hasOwnProperty("activeCharId")) {
+            switch (actChar.system) {
+                case 'Open Legend - Fantasy Battle':
+                    if (!(str = FB.command(cmd)))
+                        str = "";
+                    break;
+                default:
+                    break;
+            }
+        }
+        // se é pra mandar alguma coisa
+        if (str !== "") {
+            message.channel.send(str);
+            return;
+        }
+
+        // if it wasn't a command specific of a RPG system, test if regular command
         switch (cmd.split(" ")[0].toLowerCase()) {
             case 'sum':
             case 'soma':
             case 'some':
             case 'summ':
-                let rollArgs = Dice.getDiceRoll(cmd);
-                let rollResult = Dice.rollDice(rollArgs, list, sum, true);
-    
-                str += rollResult;
+                if (true) {
+                    let rollArgs = Dice.getDiceRoll(cmd);
+                    let rollResult = Dice.rollDice(rollArgs, list, sum, true);
+        
+                    str += rollResult;
+                }
                 break;
 
             case 'createchar':
@@ -198,86 +219,13 @@ bot.on('message', (message) => {
 
             case 'role':
             case 'rola':
-            case 'checa':
-    
-                // se a pessoa não tem um personagem ativo, tratar como uma rolagem normal
-                if (!users[id].hasOwnProperty("activeCharId")) {
+            case 'roll':
+                if (true) {
                     let rollArgs = Dice.getDiceRoll(cmd);
                     let rollResult = Dice.rollDice(rollArgs, list, sum, false);
-
+    
                     str += rollResult;
-                    break;
                 }
-                // se a pessoa tem um personagem ativo, procurar um attributo para rolar
-                else {
-                }
-                break;
-
-            case 'dano':
-            case 'damage':
-            case 'dmg':
-
-                // se o usuário não tem um pesonagem ativo, sair.
-                if (!users[id].hasOwnProperty("activeCharId")) {
-                    message.author.send("Você não pode rolar dano sem ter um personagem cadastrado e ativo. Use !createChar para criar um personagem.");
-                    break;
-                }
-
-                // lidar com o personagem ativo de acordo com o sistema que ele usa
-                switch (actChar.system) {
-                    case "Open Legend - Fantasy Battle":
-                        // se o usuário não entrou nenhum argumento, usar o attributo padrão do personagem
-                        if (cmd.split(" ").length == 1) {
-                            str += FB.rollDamage(actChar[actChar.attackAttribute]);
-                            break;
-                        }
-
-                        // se o usuário entrou algum argumento
-                        else {
-                            let bonus = 0;
-                            FB.useAttribute(cmd.split(" ")[1].toLowerCase(),
-                            // se foi um attributo válido
-                            (Attribute) => {
-                                // if there is a bonus, add it
-                                if (/[0-9]+/.test(cmd)) {
-                                    // if the bonus is positive
-                                    if (/\+ *[0-9]+/.test(cmd))
-                                        bonus = Number(/[0-9]+/.exec(cmd)[0]);
-                                    // if the bonus is negative
-                                    if (/\- *[0-9]+/.test(cmd))
-                                        bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
-                                }
-                                str += FB.rollDamage(actChar[Attribute] + bonus);
-                            },
-                            // se não foi um attributo válido
-                            (invAttribute) => {
-                                // if the invalid attribute was a bonus for the default attack attribute (!dmg +bonus)
-                                if (/(\+|-) *[0-9]+/.test(cmd)) {
-
-                                    // if the bonus is positive
-                                    if (/\+ *[0-9]+/.test(cmd))
-                                        bonus = Number(/[0-9]+/.exec(cmd)[0]);
-                                    // if the bonus is negative
-                                    if (/\- *[0-9]+/.test(cmd))
-                                        bonus = -1 * Number(/[0-9]+/.exec(cmd)[0]);
-
-                                    str += FB.rollDamage(actChar[actChar.attackAttribute] + bonus);
-                                }
-                                // se não é, comando invalido
-                                else
-                                    str += invAttribute + " não é um atributo válido. Aprenda a escrever.";
-                            });
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                break;
-
-            case "initiative":
-            case "iniciativa":
-
-                str += FB.rollInitiative(actChar.Agility);
                 break;
 
             default:
@@ -486,6 +434,7 @@ bot.on('message', (message) => {
         // se é pra mandar alguma coisa
         if (str !== "") {
             message.channel.send(str);
+            return;
         }
     }
 
@@ -920,7 +869,9 @@ bot.on('message', (message) => {
                 default:
                     break;
             }
-        } else if (users[id].isChosingActiveChar) {
+        }
+        // se esta escolhendo personagem ativo
+        else if (users[id].isChosingActiveChar) {
             // if the response was not a number
             if (!/[0-9]+/.test(message.content)) {
                 message.author.send("Isso não é um número válido para as opções apresentadas. Aprenda a digitar números. Tente de novo.");
@@ -941,7 +892,9 @@ bot.on('message', (message) => {
                     delete users[id].isChosingActiveChar;
                 }
             }
-        } else if (users[id].isConfirmingNewActiveChar) {
+        }
+        // se esta confirmando a escolha de novo pers ativo
+        else if (users[id].isConfirmingNewActiveChar) {
             // se quer mudar o personagem 
             if (message.content.toLowerCase().trim() === "yes" || message.content.toLowerCase().trim() === "y" ||
                 message.content.toLowerCase().trim() === "sim" || message.content.toLowerCase().trim() === "s") {

@@ -15,6 +15,10 @@ const Dice = require('./dice.js');
  */
 exports.rollAttribute = function (attribute, adv) {
     adv = adv || 0;
+    let list = false;
+    if (adv !== 0)
+        list = true;
+
     return Dice.rollDice(
         [{
             diceQnt: 1,
@@ -23,11 +27,15 @@ exports.rollAttribute = function (attribute, adv) {
             diceBonus: 2 * attribute,
             explode: false
         }],
-        false, true, false);
+        list, true, false);
 }
 
 exports.rollInitiative = function (agility, adv) {
     adv = adv || 0;
+    let list = false;
+    if (adv !== 0)
+        list = true;
+
     return Dice.rollDice(
         [{
             diceQnt: 1,
@@ -36,11 +44,14 @@ exports.rollInitiative = function (agility, adv) {
             diceBonus: agility,
             explode: false
         }],
-        false, true, false);
+        list, true, false);
 }
 
 exports.rollDamage = function (attribute, adv) {
     adv = adv || 0;
+    let list = false;
+    if (adv !== 0)
+        list = true;
 
     // set up dice to roll
     let dice = {};
@@ -139,7 +150,7 @@ exports.rollDamage = function (attribute, adv) {
             break;
     }
 
-    return Dice.rollDice([dice], false, true, false);
+    return Dice.rollDice([dice], list, true, false);
 }
 
 /**
@@ -326,7 +337,6 @@ exports.useAttribute = function (att, ifValid, ifInvalid) {
             return false;
             break;
     }
-
     return true;
 }
 
@@ -379,34 +389,38 @@ exports.getMaxStamina = function(char) {
  */
 exports.command = function(cmd, char) {
 // setting up the return message, and first word of command
-    let msg = "", command = cmd.split(" ")[0].toLowerCase();
+    let msg = "", command = cmd.trim().split(" ")[0].toLowerCase();
 
 // testing for commands
     // if rolling "!attribute [advantage] [bonus]"
-    if (exports.useAttribute(cmd.split(" ")[0]),
+    if (exports.useAttribute(cmd.trim().split(" ")[0],
         (Attribute) => {
             let advBonus = getAdvBonus(cmd);
+            msg += "**" + char.name + "**, rolando **" + Attribute + "**:\n";
             msg += exports.rollAttribute(char[Attribute] + advBonus.bonus, advBonus.adv);
         }
-    );
+    ));
     // if rolling "!initiative [advantage] [bonus]"
     else if (command === "initiative" || command === "iniciative" ||
              command === "iniciativa") {
         let advBonus = getAdvBonus(cmd);
+        msg += "Iniciativa para **" + char.name + "**:\n";
         msg += exports.rollInitiative(char.Agility + advBonus.bonus, advBonus.adv);
     }
     // if rolling "!damage [attribute] [advantage] [bonus]"
     else if (command === "dmg"  || command === "damg" || command === "damag" ||
              command === "dano" || command === "damage") {
-        exports.useAttribute(cmd.split(" ")[1].toLowerCase(),
+        exports.useAttribute(cmd.trim().split(" ")[1].toLowerCase(),
         // if there is an attribute, use it
             (Attribute) => {
                 let advBonus = getAdvBonus(cmd);
+                msg += "**" + char.name + "**, rolando dano para **" + Attribute + "**:\n";
                 msg += exports.rollDamage(char[Attribute] + advBonus.bonus, advBonus.adv);
             },
         // if there isn't an attribute, use the character's attack attribute
             () => {
                 let advBonus = getAdvBonus(cmd);
+                msg += "**" + char.name + "**, rolando dano para **" + char.attackAttribute + "**:\n";
                 msg += exports.rollDamage(char[char.attackAttribute] + advBonus.bonus, advBonus.adv);
             }
         );
@@ -444,6 +458,9 @@ const getAdvBonus = function(cmd) {
     // if there is positive advantage
     if (advRegExp.test(cmd)) {
         let advStr = advRegExp.exec(cmd)[0];
+        console.log("advRegExp: "+advRegExp);
+        console.log("cmd: "+cmd);
+        console.log("advStr: "+advStr);
         if (/- *[0-9]+/.test(advStr))
             adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
         else if (/\+ *[0-9]+/.test(advStr))

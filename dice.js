@@ -40,7 +40,6 @@ const advantageWords = [
     "adv",
     "van",
     "vant",
-    "v"
 ];
 
 // array of words that represent disadvantage
@@ -56,7 +55,6 @@ const disadvantageWords = [
     "desvantagem",
     "desv",
     "des",
-    "dv",
 ]
 /**** constants *****************************************************************/ 
 
@@ -369,6 +367,7 @@ const getNextDie = function(_args, index) {
     let rollStr = /[0-9]* *d *[0-9]+ *!*/i.exec(args)[0].toString().toLowerCase();
     // check if there are future rolls after this one. if there are, cut the string to not grab advantage/bonus from future rolls
     let postRollArg = args.slice(args.search(rollStr) + rollStr.length);
+    
     if (/[0-9]* *d *[0-9]+/i.test(postRollArg)) {
 
         // get everything possible in between the current roll and the start of the next one
