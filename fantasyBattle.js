@@ -382,66 +382,21 @@ exports.command = function(cmd, char) {
     let msg = "", command = cmd.split(" ")[0].toLowerCase();
 
 // testing for commands
-    // if rolling "!attribute"
+    // if rolling "!attribute [advantage] [bonus]"
     if (exports.useAttribute(cmd.split(" ")[0]),
         (Attribute) => {
-        // try to get advantage (oh god why am i doing this)
-            let advantageWords = Dice.getAdvWords().adv,
-                disadvantageWords = Dice.getAdvWords().dis;
-            let advRegStr = "(";
-            for (i in advantageWords) {
-                if (i != 0)
-                    advRegStr += "|";
-                advRegStr += advantageWords[i];
-            }
-            advRegStr += ") *(\\++|-+)? *[0-9]*";
-            let advRegExp = new RegExp(advRegStr, "i");
-            let disRegStr = "(";
-            for (i in disadvantageWords) {
-                if (i != 0)
-                    disRegStr += "|";
-                    disRegStr += disadvantageWords[i];
-            }
-            disRegStr += ") *(\\++|-+)? *[0-9]*";
-            let disRegExp = new RegExp(disRegStr, "i");
-
-            let adv = 0;
-            // if there is positiva advantage
-            if (advRegExp.test(cmd)) {
-                let advStr = advRegExp.exec(cmd)[0];
-                if (/- *[0-9]+/.test(advStr))
-                    adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
-                else if (/\+ *[0-9]+/.test(advStr))
-                    adv =      Number(/[0-9]+/.exec(cmd)[0]);
-                else
-                    adv = 1;
-            }
-            // if there is negative advantage
-            else if (disRegExp.test(cmd)) {
-                let advStr = disRegExp.exec(cmd)[0];
-                if (/[0-9]+/.test(advStr))
-                    adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
-                else
-                    adv = -1;
-            }
-        // get bonus
-            let bonus = 0;
-            if (/(\+|-) *[0-9]+/.test(cmd)) {
-                // if the bonus is positive
-                if (/\+ *[0-9]+/.test(cmd))
-                    bonus = Number(/[0-9]+/.exec(cmd)[0]);
-                // if the bonus is negative
-                if (/\- *[0-9]+/.test(cmd))
-                    bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
-            }
-            msg += exports.rollAttribute(char[Attribute] + bonus, adv);
+            let advBonus = getAdvBonus(cmd);
+            msg += exports.rollAttribute(char[Attribute] + advBonus.bonus, advBonus.adv);
         }
     );
     // if rolling "!initiative"
     else if (command === "initiative" || command === "iniciative" ||
              command === "iniciativa") {
-        
+        let advBonus = getAdvBonus(cmd);
+        msg += exports.rollInitiative(char.Agility + advBonus.bonus, advBonus.adv);
     }
+    // if rolling "!damage [attribute]"
+
     // if it wasn't a valid command, return false
     else {
         return false;
@@ -471,7 +426,7 @@ const getAdvBonus = function(cmd) {
     let disRegExp = new RegExp(disRegStr, "i");
 
     let adv = 0;
-    // if there is positiva advantage
+    // if there is positive advantage
     if (advRegExp.test(cmd)) {
         let advStr = advRegExp.exec(cmd)[0];
         if (/- *[0-9]+/.test(advStr))
@@ -480,6 +435,8 @@ const getAdvBonus = function(cmd) {
             adv =      Number(/[0-9]+/.exec(cmd)[0]);
         else
             adv = 1;
+        
+        cmd = cmd.slice(advRegExp.exec(cmd).index + advRegExp.exec(cmd)[0].length);
     }
     // if there is negative advantage
     else if (disRegExp.test(cmd)) {
@@ -488,6 +445,8 @@ const getAdvBonus = function(cmd) {
             adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
         else
             adv = -1;
+        
+        cmd = cmd.slice(disRegExp.exec(cmd).index + disRegExp.exec(cmd)[0].length);
     }
     // get bonus
     let bonus = 0;
@@ -505,6 +464,181 @@ const getAdvBonus = function(cmd) {
         bonus: bonus
     };
 }
+
+// setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
+const Agility = [
+    "agi",
+    "agil",
+    "agilit",
+    "agility",
+    "agilidade"
+];
+
+const Fortitude = [
+    "for",
+    "fort",
+    "fortitude"
+];
+
+const Might = [
+    "mig",
+    "mgt",
+    "might",
+    "mihgt",
+    "str",
+    "strength",
+    "strenthg",
+    "strenhtg",
+    "forca",
+    "força"
+];
+
+const Learning = [
+    "lea",
+    "lear",
+    "learn",
+    "learning",
+    "apre",
+    "apren",
+    "aprend",
+    "aprendiz",
+    "aprendizado"
+];
+
+const Logic = [
+    "log",
+    "logi",
+    "logic",
+    "lóg",
+    "lógi",
+    "lógic",
+    "lógica"
+];
+
+const Perception = [
+    "perc",
+    "perce",
+    "percep",
+    "perception",
+    "percepcao",
+    "percepçao",
+    "percepção"
+];
+
+const Will = [
+    "wil",
+    "will",
+    "wil",
+    "wil",
+    "vontade",
+    "vont"
+];
+
+const Deception = [
+    "dec",
+    "decep",
+    "deception",
+    "decepção",
+    "decepcão",
+    "decepçao",
+    "decepcao"
+];
+
+const Persuasion = [
+    "pers",
+    "persuasion",
+    "persuation",
+    "persuasao",
+    "persuazao",
+    "persuasão",
+    "persuazão"
+];
+
+const Presence = [
+    "prese",
+    "presence",
+    "presenca",
+    "presença"
+];
+
+const Alteration = [
+    "al",
+    "alt",
+    "alte",
+    "alter",
+    "alteration",
+    "alterasion",
+    "alteracao",
+    "alteracão",
+    "alteraçao",
+    "alteração"
+];
+
+const Creation = [
+    "cre",
+    "crea",
+    "creat",
+    "creation",
+    "cri",
+    "cria",
+    "criacao",
+    "criacão",
+    "criaçao",
+    "criação"
+];
+
+const Energy = [
+    "ene",
+    "ener",
+    "energy",
+    "energia"
+];
+
+const Entropy = [
+    "ent",
+    "entr",
+    "entropy",
+    "entropia"
+];
+
+const Influence = [
+    "inf",
+    "infl",
+    "influ",
+    "influence",
+    "influencia",
+    "influência"    
+];
+
+const Movement = [
+    "mov",
+    "move",
+    "movement",
+    "movi",
+    "movim",
+    "movimento"
+];
+
+const Prescience = [
+    "presc",
+    "presci",
+    "prescien",
+    "presciên",
+    "prescience",
+    "presciencia",
+    "presciência"
+];
+
+const Protection = [
+    "pro",
+    "prot",
+    "protec",
+    "protect",
+    "protection",
+    "proteç",
+    "proteção"
+];
+// setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
  * @typedef Resource
