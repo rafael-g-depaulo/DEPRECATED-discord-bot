@@ -480,8 +480,6 @@ const getAdvantage = function(args) {
 
         // get the string that has the advantage
         let advStr = advRegExp.exec(args)[0];
-        console.log("advRegExp.exec(args): |" +advRegExp.exec(args)+"|");
-        console.log("advStr: |" +advStr+"|");
         // now get the advantage number and signal(if they exist)
         if (/(\+|-)? *[0-9]+/.test(advStr)) {
 

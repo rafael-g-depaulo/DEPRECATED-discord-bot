@@ -7,8 +7,6 @@ const fileIO = require('./fileIO.js');
 const FB = require("./fantasyBattle.js")
 const bot = new Discord.Client();
 
-console.log(FB.command("initiative +2vant +3", {Agility: 1, name: "Kuff"}));
-
 // Array of user info ////////////////////////////////////////////
 let users = [];
 
@@ -45,17 +43,24 @@ bot.on('message', (message) => {
     if (message.content.slice(0, 1) === '!') {
         const cmd = message.content.slice(1);    // shorthand for the entered command
         let str = "";                            // response string
-        let tempStr;                             // i as of now don't know what to name this. i checks for stuff and keeps information i want to send, and checks IFs
 
         // check if has a character, and then if using a command involving a RPG system
         if (users[id].hasOwnProperty("activeCharId")) {
             switch (actChar.system) {
                 case 'Open Legend - Fantasy Battle':
-                    if (!(str = FB.command(cmd)))
+                    // if a direct command, apply it with the active character
+                    if (!(str = FB.command(cmd, actChar)))
                         str = "";
+                    // if dealing directly with a characer
+                    if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0])) {
+                        console.log("if 2");
+                        if (!(str = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0])))) {
+                            str = "";
+                        }
+                    }
+                    console.log("hasChar: "+hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]));
                     break;
-                default:
-                    break;
+                // no default needed. all possibilities for actChar.system are exausted
             }
         }
         // se é pra mandar alguma coisa
@@ -127,8 +132,6 @@ bot.on('message', (message) => {
                         if (char[0].id === users[id].activeCharId) {
                             message.author.send(actChar.name+" já é o personagem ativo.");
                         } else {
-                            console.log(char[0].id);
-                            console.log(users[id].activeCharId);
                             users[id].isConfirmingNewActiveChar = true;
                             users[id].possibleNewActiveCharID = char[0].id;
                             message.author.send("Quer mudar seu personagem ativo de "+ actChar.name +" para "+ char[0].name
@@ -217,12 +220,7 @@ bot.on('message', (message) => {
             case 'role':
             case 'rola':
             case 'roll':
-                if (true) {
-                    let rollArgs = Dice.getDiceRoll(cmd);
-                    let rollResult = Dice.rollDice(rollArgs, list, sum, false);
-    
-                    str += rollResult;
-                }
+                str += Dice.rollDice(Dice.getDiceRoll(cmd), list, sum, false);
                 break;
 
             default:
@@ -912,5 +910,36 @@ bot.on('message', (message) => {
         fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
     }
 })
+
+/**
+ * @description checks if a user has a specific character
+ * 
+ * @param {{chars: {name: string}[]}} user 
+ * @param {string} char 
+ * 
+ * @returns {boolean}
+ */
+const hasChar = function(user, char) {
+    char = char.toLowerCase().trim();
+    for (let i = 0; i < user.chars.length; i++)
+        if (user.chars[i].name.toLowerCase().trim().search(char) !== -1)
+            return true;
+    return false;
+}
+
+/**
+ * @description returns a specific character the user has
+ * 
+ * @param {{chars: {name: string}[]}} user 
+ * @param {string} char 
+ * 
+ * @returns {any} the character
+ */
+const getChar = function(user, char) {
+    char = char.toLowerCase().trim();
+    for (let i = 0; i < user.chars.length; i++)
+        if (user.chars[i].name.toLowerCase().trim().search(char) !== -1)
+            return user.chars[i];
+}
 
 bot.login('NDAxNTM3MTYzMTEzNjYwNDM2.DUFImw.DhpAJ_Qd2hoIe14WdAK0KAd3qhI');

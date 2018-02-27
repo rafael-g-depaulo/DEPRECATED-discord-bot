@@ -458,9 +458,6 @@ const getAdvBonus = function(cmd) {
     // if there is positive advantage
     if (advRegExp.test(cmd)) {
         let advStr = advRegExp.exec(cmd)[0];
-        console.log("advRegExp: "+advRegExp);
-        console.log("cmd: "+cmd);
-        console.log("advStr: "+advStr);
         if (/- *[0-9]+/.test(advStr))
             adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
         else if (/\+ *[0-9]+/.test(advStr))
