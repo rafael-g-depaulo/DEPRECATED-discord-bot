@@ -437,21 +437,21 @@ const getAdvBonus = function(cmd) {
     // try to get advantage (oh god why am i doing this)
     let advantageWords = Dice.getAdvWords().adv,
         disadvantageWords = Dice.getAdvWords().dis;
-    let advRegStr = "(";
+    let advRegStr = "(\\++|-+)? *[0-9]* *(";
     for (i in advantageWords) {
         if (i != 0)
             advRegStr += "|";
         advRegStr += advantageWords[i];
     }
-    advRegStr += ") *(\\++|-+)? *[0-9]*";
+    advRegStr += ")";
     let advRegExp = new RegExp(advRegStr, "i");
-    let disRegStr = "(";
+    let disRegStr = "(\\++|-+)? *[0-9]* *(";
     for (i in disadvantageWords) {
         if (i != 0)
             disRegStr += "|";
             disRegStr += disadvantageWords[i];
     }
-    disRegStr += ") *(\\++|-+)? *[0-9]*";
+    disRegStr += ")";
     let disRegExp = new RegExp(disRegStr, "i");
 
     let adv = 0;

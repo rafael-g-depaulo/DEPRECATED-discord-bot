@@ -457,13 +457,13 @@ const getAdvantage = function(args) {
 
     // Now that we know that we arent stepping into other rolls' territory, ...
     // ... we can look for (dis)advantage & bonus
-    let advRegStr = "(";
+    let advRegStr = "(\\++|-+)? *[0-9]* *(";
     for (i in advantageWords) {
         if (i != 0)
             advRegStr += "|";
         advRegStr += advantageWords[i];
     }
-    advRegStr += ") *(\\++|-+)? *[0-9]*";
+    advRegStr += ")";
     let advRegExp = new RegExp(advRegStr, "i");
 
     let disRegStr = "(";
@@ -472,7 +472,7 @@ const getAdvantage = function(args) {
             disRegStr += "|";
             disRegStr += disadvantageWords[i];
     }
-    disRegStr += ") *(\\++|-+)? *[0-9]*";
+    disRegStr += ")";
     let disRegExp = new RegExp(disRegStr, "i");
 
     // if there is advantage
@@ -480,7 +480,8 @@ const getAdvantage = function(args) {
 
         // get the string that has the advantage
         let advStr = advRegExp.exec(args)[0];
-
+        console.log("advRegExp.exec(args): |" +advRegExp.exec(args)+"|");
+        console.log("advStr: |" +advStr+"|");
         // now get the advantage number and signal(if they exist)
         if (/(\+|-)? *[0-9]+/.test(advStr)) {
 

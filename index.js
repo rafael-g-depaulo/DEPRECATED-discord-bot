@@ -7,6 +7,8 @@ const fileIO = require('./fileIO.js');
 const FB = require("./fantasyBattle.js")
 const bot = new Discord.Client();
 
+console.log(FB.command("initiative +2vant +3", {Agility: 1, name: "Kuff"}));
+
 // Array of user info ////////////////////////////////////////////
 let users = [];
 
@@ -68,12 +70,7 @@ bot.on('message', (message) => {
             case 'soma':
             case 'some':
             case 'summ':
-                if (true) {
-                    let rollArgs = Dice.getDiceRoll(cmd);
-                    let rollResult = Dice.rollDice(rollArgs, list, sum, true);
-        
-                    str += rollResult;
-                }
+                str += Dice.rollDice(Dice.getDiceRoll(cmd), list, sum, true);
                 break;
 
             case 'createchar':
