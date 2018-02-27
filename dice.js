@@ -356,11 +356,11 @@ const getNextDie = function(_args, index) {
     // create a string with the section of _args with wich we are working
     let args = _args.toLowerCase();
     if (index > 0)
-        args = args.slice(index-1);
+        args = args.slice(index);
     let next = 0;
     
     // if there isn't a valid command roll in args, return false
-    if (!/[0-9]* *d *[0-9]+/i.test(args))
+    if (!/[0-9]* *d *[0-9]+ *!*/i.test(args))
         return false;
 
     // get current roll command
@@ -377,7 +377,11 @@ const getNextDie = function(_args, index) {
         args = args.slice(0, args.indexOf(postRollArg) + postRollArg.length);
     }
     // update next to be at the start of the next roll
-    next = index + rollStr.length + /[0-9]* *d *[0-9]+ *!*/i.exec(args).index;
+    next = index + args.length;// + /[0-9]* *d *[0-9]+ *!*/i.exec(args).index;
+    // if args doesnt contain the rollStr, add rollStr.length to next;
+    if (!/[0-9]* *d *[0-9]+ *!*/i.test(args))
+        next +=rollStr.length;
+    
 
     // get the dice args
     let roll = {};
