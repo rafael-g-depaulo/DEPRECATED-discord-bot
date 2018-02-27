@@ -52,13 +52,9 @@ bot.on('message', (message) => {
                     if (!(str = FB.command(cmd, actChar)))
                         str = "";
                     // if dealing directly with a characer
-                    if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0])) {
-                        console.log("if 2");
-                        if (!(str = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0])))) {
+                    if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]))
+                        if (!(str = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0]))))
                             str = "";
-                        }
-                    }
-                    console.log("hasChar: "+hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]));
                     break;
                 // no default needed. all possibilities for actChar.system are exausted
             }
