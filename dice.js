@@ -369,7 +369,6 @@ const getNextDie = function(_args, index) {
     let postRollArg = args.slice(args.search(rollStr) + rollStr.length);
     
     if (/[0-9]* *d *[0-9]+/i.test(postRollArg)) {
-
         // get everything possible in between the current roll and the start of the next one
         postRollArg = postRollArg.slice(0, /[0-9]* *d *[0-9]+/i.exec(postRollArg).index);
         
@@ -377,11 +376,10 @@ const getNextDie = function(_args, index) {
         args = args.slice(0, args.indexOf(postRollArg) + postRollArg.length);
     }
     // update next to be at the start of the next roll
-    next = index + args.length;// + /[0-9]* *d *[0-9]+ *!*/i.exec(args).index;
+    next = index + args.length;
     // if args doesnt contain the rollStr, add rollStr.length to next;
     if (!/[0-9]* *d *[0-9]+ *!*/i.test(args))
         next +=rollStr.length;
-    
 
     // get the dice args
     let roll = {};
@@ -397,6 +395,10 @@ const getNextDie = function(_args, index) {
 
     // get explosion
     roll.explode = /!/.test(rollStr);
+
+    // prevent d0's
+    if (roll.diceMax === 0)
+        roll.diceMax = 1;
 
     // prevent d1's with explosion
     if (roll.diceMax === 1)
