@@ -385,7 +385,7 @@ exports.getMaxStamina = function(char) {
  * @param {string} cmd          command string 
  * @param {Character} char      character 
  * 
- * @returns {string|boolean}    Either a string of the resolved command, or false if no valid command
+ * @returns {{msg: string, char: Character}|boolean}    Either a string of the resolved command, or false if no valid command
  */
 exports.command = function(cmd, char) {
 // setting up the return message, and first word of command
@@ -410,7 +410,10 @@ exports.command = function(cmd, char) {
     // if rolling "!damage [attribute] [advantage] [bonus]"
     else if (command === "dmg"  || command === "damg" || command === "damag" ||
              command === "dano" || command === "damage") {
-        exports.useAttribute(cmd.trim().split(" ")[1].toLowerCase(),
+        let attb = "";
+        if (cmd.trim().split(" ").length > 1)
+            attb = cmd.trim().split(" ")[1].toLowerCase();
+        exports.useAttribute(attb,
         // if there is an attribute, use it
             (Attribute) => {
                 let advBonus = getAdvBonus(cmd);
@@ -425,12 +428,29 @@ exports.command = function(cmd, char) {
             }
         );
     }
+    // if taking/restoring/checking hit points
+    else if (command === "hp" || command === "health" || command === "healthpoints" || command === "hitpoints" || command === "vida" ||
+             command === "saude" || command === "saúde") {
+        
+        // if there is a damage/healing to add
+        if (/(\+|-) *[0-9]+/.test(cmd)) {
+            // if positive
+            if (/\+ *[0-9]+/.test(cmd));
+            // char.HP;
+            // if negative
+        }
+        msg += "aaa";
+        char.diff = 11;
+    }
     // if it wasn't a valid command, return false
     else {
         return false;
     }
 
-    return msg;
+    return {
+        msg: msg,
+        char: char 
+    };
 }
 
 const getAdvBonus = function(cmd) {

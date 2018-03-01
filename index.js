@@ -43,18 +43,25 @@ bot.on('message', (message) => {
     if (message.content.slice(0, 1) === '!') {
         const cmd = message.content.slice(1);    // shorthand for the entered command
         let str = "";                            // response string
+        let resp = false;                        // response of command attempt from the modules
 
         // check if has a character, and then if using a command involving a RPG system
         if (users[id].hasOwnProperty("activeCharId")) {
             switch (actChar.system) {
                 case 'Open Legend - Fantasy Battle':
                     // if a direct command, apply it with the active character
-                    if (!(str = FB.command(cmd, actChar)))
-                        str = "";
+                    if (res = FB.command(cmd, actChar)) {
+                        str = res.msg;
+                        actChar = res.char;
+                        fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
+                    }
                     // if dealing directly with a characer
-                    if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]))
-                        if (!(str = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0]))))
-                            str = "";
+                    else if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]))
+                        if (res = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0]))) {
+                            str = res.msg;
+                            actChar = res.char;
+                            fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
+                        }
                     break;
                 // no default needed. all possibilities for actChar.system are exausted
             }
@@ -426,7 +433,7 @@ bot.on('message', (message) => {
         if (str !== "") {
             message.channel.send(str);
             return;
-        }
+        }   
     }
 
     // se é uma conversa com o bot
@@ -848,9 +855,8 @@ bot.on('message', (message) => {
                         users[id].chars[users[id].chars.length-1].step = "complete";
                         delete users[id].isCreatingChar;
 
-                        // se o usuário não tem personagem anterior, colocar novo personagem como ativo
-                        if (users[id].chars.length === 1)
-                            users[id].activeCharId = 0;
+                        // colocar novo personagem como ativo
+                        users[id].activeCharId = users[id].chars.length-1;
 
                         message.author.send("Criação de personagem completa!");
                     }, (invAttribute) => {
