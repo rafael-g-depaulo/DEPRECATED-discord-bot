@@ -18,9 +18,12 @@ let users = [];
     // wether the bot accepts straight attribute roll commands (e.g.: "!Agility" for "!rola Agility")
     const dirAttr = true;
 
+bot.on('ready', () => {
+    console.log("ready!");
+});
+
 // on message to bot
 bot.on('message', (message) => {
-    
     // set up important variables
     let id = message.author.id;              // user id
     
@@ -42,7 +45,7 @@ bot.on('message', (message) => {
     // checando se foi um comando
     if (message.content.slice(0, 1) === '!') {
         const cmd = message.content.slice(1);    // shorthand for the entered command
-        let str = "";                            // response string
+        let str = "", attach = {};               // response string and attachment
         let resp = false;                        // response of command attempt from the modules
 
         // check if has a character, and then if using a command involving a RPG system
@@ -52,6 +55,7 @@ bot.on('message', (message) => {
                     // if a direct command, apply it with the active character
                     if (res = FB.command(cmd, actChar)) {
                         str = res.msg;
+                        attach = res.attach;
                         actChar = res.char;
                         fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
                     }
@@ -59,6 +63,7 @@ bot.on('message', (message) => {
                     else if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]))
                         if (res = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0]))) {
                             str = res.msg;
+                            attach = res.attach;
                             actChar = res.char;
                             fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
                         }
@@ -66,13 +71,9 @@ bot.on('message', (message) => {
                 // no default needed. all possibilities for actChar.system are exausted
             }
         }
-        // se é pra mandar alguma coisa
-        if (str !== "") {
-            message.channel.send(str);
-            return;
-        }
 
         // if it wasn't a command specific of a RPG system, test if regular command
+        if (str === "")
         switch (cmd.split(" ")[0].toLowerCase()) {
             case 'sum':
             case 'soma':
@@ -430,8 +431,11 @@ bot.on('message', (message) => {
         }
 
         // se é pra mandar alguma coisa
-        if (str !== "") {
-            message.channel.send(str);
+        if (str !== "" || attach !== {}) {
+            if (attach !== {})
+                message.channel.send(str, attach);
+            else
+                message.channel.send(str);
             return;
         }   
     }
@@ -514,50 +518,35 @@ bot.on('message', (message) => {
                         case "fantasy battle":
                         case "open legend":
                             users[id].chars[users[id].chars.length-1].system = "Open Legend - Fantasy Battle";
-                            message.author.send("Seu personagem é do sistema \"Open Legend - Fantasy Battle\", então. Quanto de HP seu personagem tem?");
-                            users[id].chars[users[id].chars.length-1].step = "OL: HP setting";
+                            let msg = "Seu personagem é do sistema \"Open Legend - Fantasy Battle\", então. Agora nós vamos cuidar dos Attributos do seu Personagem. E qual o level do seu personagem?";
+                            
+                            users[id].chars[users[id].chars.length-1].step = "OL: leveling";
+                            message.author.send(msg);
                             break;
-                        
+
                         default:
                             message.author.send("Sistema não reconhecido, por favor escolha de novo. (seu idiota)");
                             break;
                     }
                     break;
                 
-                case "OL: HP setting":
+                case "OL: leveling":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].maxHP = Number(/[0-9]+/.exec(message.content)[0]);
-                        users[id].chars[users[id].chars.length-1].HP    = Number(/[0-9]+/.exec(message.content)[0]);
-                        let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].HP
-                                + " de HP máximo. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de MP(Mana) máximo?";
-                        users[id].chars[users[id].chars.length-1].step = "OL: MP setting";
-                        message.author.send(msg);
-                    } 
-                    // if the response was not a number
-                    else {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Qual o HP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
-                        message.author.send(msg);
-                    }
-                    break;
-                    
-                case "OL: MP setting":
-                    // if the response was a number
-                    if (/[0-9]+/.test(message.content)) {
-                        users[id].chars[users[id].chars.length-1].maxMP = Number(/[0-9]+/.exec(message.content)[0]);
-                        users[id].chars[users[id].chars.length-1].MP    = Number(/[0-9]+/.exec(message.content)[0]);
-                        let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" tem "+ users[id].chars[users[id].chars.length-1].MP
-                                + " de MP máximo. Agora nós vamos cuidar dos Attributos do seu Personagem. E quanto "+ users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
+                        users[id].chars[users[id].chars.length-1].Level = Number(/[0-9]+/.exec(message.content)[0]);
+                        let msg = "Ok! Então "+ users[id].chars[users[id].chars.length-1].name +" é level "+ users[id].chars[users[id].chars.length-1].Agility
+                                + ". E quanto " + users[id].chars[users[id].chars.length-1].name +" tem de Agilidade?";
+                        
                         users[id].chars[users[id].chars.length-1].step = "OL: stating Agi";
                         message.author.send(msg);
                     }
                     // if the response was not a number
                     else {
-                        let msg = "Isso não é um número. Aprenda a digitar números. Qual o MP máximo de "+ users[id].chars[users[id].chars.length-1].name +"?";
+                        let msg = "Isso não é um número. Aprenda a digitar números. Quanto de Agilidade "+ users[id].chars[users[id].chars.length-1].name +" tem?";
                         message.author.send(msg);
                     }
                     break;
-                
+
                 case "OL: stating Agi":
                     // if the response was a number
                     if (/[0-9]+/.test(message.content)) {
@@ -851,9 +840,19 @@ bot.on('message', (message) => {
                 
                 case "OL: damage attr":
                     FB.useAttribute(message.content.trim().toLowerCase(), (Attribute) => {
-                        users[id].chars[users[id].chars.length-1].attackAttribute = Attribute;
-                        users[id].chars[users[id].chars.length-1].step = "complete";
-                        delete users[id].isCreatingChar;
+                        let charId = users[id].chars.length-1;
+                        
+                        users[id].chars[charId].attackAttribute = Attribute;
+                        users[id].chars[charId].step = "complete";
+                        delete users[id].isCreatingChar; 
+
+                        // pegar HP, MP e stamina maximos do personagem
+                        users[id].chars[charId].hp_max = FB.getMaxHP(users[id].chars[charId]);
+                        users[id].chars[charId].mp_max = FB.getMaxMP(users[id].chars[charId]);
+                        users[id].chars[charId].stamina_max = FB.getMaxStamina(users[id].chars[charId]);
+                        users[id].chars[charId].hp = users[id].chars[charId].maxHp;
+                        users[id].chars[charId].mp = users[id].chars[charId].maxMp;
+                        users[id].chars[charId].stamina = users[id].chars[charId].maxStamina;
 
                         // colocar novo personagem como ativo
                         users[id].activeCharId = users[id].chars.length-1;

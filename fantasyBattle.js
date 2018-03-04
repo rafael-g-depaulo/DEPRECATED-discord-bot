@@ -5,6 +5,8 @@
 
 // loading modules
 const Dice = require('./dice.js');
+const cards = require('./cards.js');
+const path = require('path');
 
 /**
  * @description Rolls an Attribute
@@ -165,189 +167,31 @@ exports.rollDamage = function (attribute, adv) {
 exports.useAttribute = function (att, ifValid, ifInvalid) {
     ifValid = ifValid || (() => {});
     ifInvalid = ifInvalid || (() => {});
+    att = att.toLowerCase().trim();
 
-    switch (att) {
-        case "agi":
-        case "agility":
-        case "agilidade":
-        case "agil":
-            ifValid("Agility");
-            break;
-            
-        case "for":
-        case "fort":
-        case "fortitude":
-            ifValid("Fortitude");
-            break;
-            
-        case "mig":
-        case "mgt":
-        case "might":
-        case "migth":
-        case "str":
-        case "força":
-        case "forca":
-            ifValid("Might")
-            break;
-            
-        case "learning":
-        case "lea":
-        case "lear":
-        case "learn":
-        case "apre":
-        case "apren":
-        case "aprend":
-        case "aprendizado":
-            ifValid("Learning");
-            break;
-            
-        case "logic":
-        case "log":
-        case "logica":
-        case "lógica":
-            ifValid("Logic");
-            break;
-            
-        case "perc":
-        case "perce":
-        case "percep":
-        case "perception":
-        case "percepcao":
-        case "percepçao":
-        case "percepção":
-            ifValid("Perception");
-            break;
-
-        case "wil":
-        case "will":
-        case "wil":
-        case "wil":
-        case "vontade":
-        case "vont":
-            ifValid("Will");
-            break;
-
-        case "dec":
-        case "decep":
-        case "deception":
-        case "decepção":
-        case "decepcão":
-        case "decepçao":
-        case "decepcao":
-            ifValid("Deception");
-            break;
-
-        case "pers":
-        case "persuasion":
-        case "persuation":
-        case "persuasao":
-        case "persuazao":
-        case "persuasão":
-        case "persuazão":
-            ifValid("Persuasion");
-            break;
-        
-        case "prese":
-        case "presence":
-        case "presenca":
-        case "presença":
-            ifValid("Presence");
-            break;    
-
-        case "al":
-        case "alt":
-        case "alte":
-        case "alter":
-        case "alteration":
-        case "alterasion":
-        case "alteracao":
-        case "alteracão":
-        case "alteraçao":
-        case "alteração":
-            ifValid("Alteration"); 
-            break;
-
-        case "cre":
-        case "crea":
-        case "creat":
-        case "creation":
-        case "cri":
-        case "cria":
-        case "criacao":
-        case "criacão":
-        case "criaçao":
-        case "criação":
-            ifValid("Creation");
-            break;    
-
-        case "ene":
-        case "ener":
-        case "energy":
-        case "energia":
-            ifValid("Energy");
-            break;    
-
-        case "ent":
-        case "entr":
-        case "entropy":
-        case "entropia":
-            ifValid("Entropy");
-            break;    
-
-        case "inf":
-        case "infl":
-        case "influ":
-        case "influence":
-        case "influencia":
-        case "influência":
-            ifValid("Influence");
-            break;    
-
-        case "mov":
-        case "move":
-        case "movement":
-        case "movi":
-        case "movim":
-        case "movimento":
-            ifValid("Movement");
-            break;    
-
-        case "presc":
-        case "presci":
-        case "prescien":
-        case "presciên":
-        case "prescience":
-        case "presciencia":
-        case "presciência":
-            ifValid("Prescience");
-            break;    
-
-        case "pro":
-        case "prot":
-        case "protec":
-        case "protect":
-        case "protection":
-        case "proteç":
-        case "proteção":
-            ifValid("Protection");
-            break;
-
-        default:
-            ifInvalid(att);
-            return false;
-            break;
+    // iterate over all attributes
+    for (attb in Stats) {
+        // iterate over all possible names for an attribute
+        for (statName of (Stats[attb])) {
+            if (att === statName) {
+                ifValid(attb);
+                return true;
+            }
+        }
     }
-    return true;
+    ifInvalid(att);
+    return false;
 }
 
 exports.getMaxHP = function(char) {
-    return
+    return (
         10 +
         2 * char.Fortitude +
         2 * char.Presence + 
         1 * char.Will + 
         Math.floor(1.5 * char.Might) + 
-        2 * char.Level;
+        2 * char.Level
+    );
 }
 
 exports.getMaxMP = function(char) {
@@ -362,21 +206,40 @@ exports.getMaxMP = function(char) {
         char.Protection
     ].sort((a, b) => a-b)[0];
 
-    return
+    return (
         10 +
         3 * char.Learning +
         2 * char.Will +
         Math.ceil(1.5 * maxSuper) +
-        2 * char.Level;
+        2 * char.Level
+    );
 }
 
 exports.getMaxStamina = function(char) {
-    return
+    return (
         10 +
         3 * char.Fortitude +
         2 * char.Agility +
         1 * char.Might +
-        1 * char.Level;
+        1 * char.Level
+    );
+}
+
+exports.useResource = function(res, ifValid) {
+    ifValid = ifValid || (() => {});
+    res = res.toLowerCase().trim();
+
+    // iterate over all attributes
+    for (resource in Resources) {
+        // iterate over all possible names for an attribute
+        for (resName of (Resources[resource])) {
+            if (res === resName) {
+                ifValid(resName);
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 /**
@@ -385,15 +248,18 @@ exports.getMaxStamina = function(char) {
  * @param {string} cmd          command string 
  * @param {Character} char      character 
  * 
- * @returns {{msg: string, char: Character}|boolean}    Either a string of the resolved command, or false if no valid command
+ * @returns {{msg: string, char: Character, attach: {}}|boolean}    Either a string of the resolved command, or false if no valid command
  */
 exports.command = function(cmd, char) {
 // setting up the return message, and first word of command
-    let msg = "", command = cmd.trim().split(" ")[0].toLowerCase();
+    let msg = "";
+    let command = cmd.trim().split(" ")[0].toLowerCase();
+    let arg1 = cmd.trim().split(" ")[1].toLowerCase();
+    let attach = {};
 
 // testing for commands
     // if rolling "!attribute [advantage] [bonus]"
-    if (exports.useAttribute(cmd.trim().split(" ")[0],
+    if (exports.useAttribute(command,
         (Attribute) => {
             let advBonus = getAdvBonus(cmd);
             msg += "**" + char.name + "**, rolando **" + Attribute + "**:\n";
@@ -428,19 +294,128 @@ exports.command = function(cmd, char) {
             }
         );
     }
-    // if taking/restoring/checking hit points
-    else if (command === "hp" || command === "health" || command === "healthpoints" || command === "hitpoints" || command === "vida" ||
-             command === "saude" || command === "saúde") {
-        
-        // if there is a damage/healing to add
-        if (/(\+|-) *[0-9]+/.test(cmd)) {
-            // if positive
-            if (/\+ *[0-9]+/.test(cmd));
-            // char.HP;
-            // if negative
+    // if taking/restoring/checking HP, Mana or Stamina
+    else if (exports.useResource(command,
+        (resource) => {
+            // if there is damage/healing to add
+            while (/(\+|-) *[0-9]+/.test(cmd)) {
+                // if positive
+                if (/\+ *[0-9]+/.test(cmd))
+                    char[resource] += Number(/[0-9]+/.exec(cmd)[0]);
+                // if negative
+                if (/- *[0-9]+/.test(cmd))
+                    char[resource] -= Number(/[0-9]+/.exec(cmd)[0]);
+
+                cmd = cmd.slice(/(\+|-) *[0-9]+/.exec(cmd).index + /(\+|-) *[0-9]+/.exec(cmd)[0].length);
+            }
+
+            // if above max, restore to max
+            if (char[resource] > char[resource+"_max"])
+                char[resource] = char[resource+"_max"];
+
+            msg += "**" + resource.toUpperCase() + "**: " + char[resource] + "/" + char[resource+"_max"];
+
+            msg += "\n";
         }
-        msg += "aaa";
-        char.diff = 11;
+    ));
+    // if drawing a card
+    else if (command === "draw" || command === "drawcard") {
+        let card = cards.draw();
+        // if doesn't have a cards property, give it one
+        if (!char.hasOwnProperty("cards"))
+            char.cards = {};
+
+        // if the character has cards of that type, add 1 to the property
+        if (char.cards.hasOwnProperty(card))
+            char.cards[card]++;
+        else
+            char.cards[card] = 1;
+
+        let symbol = card.split("_")[0];
+        let suit = card.split("_")[1];
+
+        msg += "Você comprou uma carta. A sua carta é ";
+
+        if (symbol === 'Q')
+            msg += "a ";
+        else
+            msg += "o ";
+        
+        switch (symbol) {
+            case 'A':
+                msg += "ás";
+                break;
+            case '2':
+                msg += "dois";
+                break;
+            case '3':
+                msg += "três";
+                break;
+            case '4':
+                msg += "quatro";
+                break;
+            case '5':
+                msg += "cinco";
+                break;
+            case '6':
+                msg += "seis";
+                break;
+            case '7':
+                msg += "sete";
+                break;
+            case '8':
+                msg += "oito";
+                break;
+            case '9':
+                msg += "nove";
+                break;
+            case '10':
+                msg += "dez";
+                break;
+            case 'J':
+                msg += "valete";
+                break;
+            case 'Q':
+                msg += "dama";
+                break;
+            case 'K':
+                msg += "rei";
+                break;
+        }
+        
+        switch (suit) {
+            case 'CLUBS':
+                msg += " de paus";
+                break;
+            case 'DIAMONDS':
+                msg += " de ouros";
+                break;
+            case 'HEARTS':
+                msg += " de copas";
+                break;
+            case 'SPADES':
+                msg += " de espadas";
+                break;
+        }
+
+        attach = {
+            files:[{
+                attachment: path.join(__dirname, "/media/cards/"+card+".png"),
+                name: card+'.png'
+            }]
+        };
+    }
+    // if using a card
+    else if (command === "card" || command === "carta" || command === "usecard" || command === "usacarta"
+    || ( (command === "use" || command === "usa") && (arg1 === "card" || arg1 === "carta"))) {
+
+        // // se o personagem não tem um card, retorne
+        // if (!char.hasOwnProperty("cards") || Object.keys(char.cards).length === 0) {
+        //     msg = "Você não tem nenhum card. Seto Kaiba ficaria decepcionado.";
+        // } else {
+        //     // se falou um card pelo nome
+        //     if (cards.namesCard(cmd));
+        // }
     }
     // if it wasn't a valid command, return false
     else {
@@ -449,7 +424,8 @@ exports.command = function(cmd, char) {
 
     return {
         msg: msg,
-        char: char 
+        char: char,
+        attach: attach
     };
 }
 
@@ -479,9 +455,9 @@ const getAdvBonus = function(cmd) {
     if (advRegExp.test(cmd)) {
         let advStr = advRegExp.exec(cmd)[0];
         if (/- *[0-9]+/.test(advStr))
-            adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+            adv -= Number(/[0-9]+/.exec(cmd)[0]);
         else if (/\+ *[0-9]+/.test(advStr))
-            adv =      Number(/[0-9]+/.exec(cmd)[0]);
+            adv += Number(/[0-9]+/.exec(cmd)[0]);
         else
             adv = 1;
         
@@ -491,7 +467,7 @@ const getAdvBonus = function(cmd) {
     else if (disRegExp.test(cmd)) {
         let advStr = disRegExp.exec(cmd)[0];
         if (/[0-9]+/.test(advStr))
-            adv = -1 * Number(/[0-9]+/.exec(cmd)[0]);
+            adv -= Number(/[0-9]+/.exec(cmd)[0]);
         else
             adv = -1;
         
@@ -499,13 +475,15 @@ const getAdvBonus = function(cmd) {
     }
     // get bonus
     let bonus = 0;
-    if (/(\+|-) *[0-9]+/.test(cmd)) {
+    while (/(\+|-) *[0-9]+/.test(cmd)) {
         // if the bonus is positive
         if (/\+ *[0-9]+/.test(cmd))
-            bonus = Number(/[0-9]+/.exec(cmd)[0]);
+            bonus += Number(/[0-9]+/.exec(cmd)[0]);
         // if the bonus is negative
         if (/\- *[0-9]+/.test(cmd))
-            bonus = -1 * Number(/[0-9]+/.exec(cmd)[0])
+            bonus -= Number(/[0-9]+/.exec(cmd)[0]);
+
+        cmd = cmd.slice(/(\+|-) *[0-9]+/.exec(cmd).index + /(\+|-) *[0-9]+/.exec(cmd)[0].length);
     }
 
     return {
@@ -514,181 +492,192 @@ const getAdvBonus = function(cmd) {
     };
 }
 
-exports.getAdvBonus = getAdvBonus;
+// exports.getAdvBonus = getAdvBonus;   // dunno why this is here. if ever needed, de-comment it
 
 // setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
-const Agility = [
-    "agi",
-    "agil",
-    "agilit",
-    "agility",
-    "agilidade"
-];
+const Stats = {
+    Agility: [
+        "agi",
+        "agil",
+        "agilit",
+        "agility",
+        "agilidade"
+    ],
+    Fortitude: [
+        "for",
+        "fort",
+        "fortitude"
+    ],
+    Might: [
+        "mig",
+        "migh",
+        "mgt",
+        "might",
+        "mihgt",
+        "migth", 
+        "str",
+        "strength",
+        "strenthg",
+        "strenhtg",
+        "forca",
+        "força"
+    ],
+    Learning: [
+        "lea",
+        "lear",
+        "learn",
+        "learning",
+        "apre",
+        "apren",
+        "aprend",
+        "aprendiz",
+        "aprendizado"
+    ],
+    Logic: [
+        "log",
+        "logi",
+        "logic",
+        "lóg",
+        "lógi",
+        "lógic",
+        "lógica"
+    ],
+    Perception: [
+        "perc",
+        "perce",
+        "percep",
+        "perception",
+        "percepcao",
+        "percepçao",
+        "percepção"
+    ],
+    Will: [
+        "wil",
+        "will",
+        "wil",
+        "wil",
+        "vontade",
+        "vont"
+    ],
+    Deception: [
+        "dec",
+        "decep",
+        "deception",
+        "decepção",
+        "decepcão",
+        "decepçao",
+        "decepcao"
+    ],
+    Persuasion: [
+        "pers",
+        "persuasion",
+        "persuation",
+        "persuasao",
+        "persuazao",
+        "persuasão",
+        "persuazão"
+    ],
+    Presence: [
+        "prese",
+        "presence",
+        "presenca",
+        "presença"
+    ],
+    Alteration: [
+        "al",
+        "alt",
+        "alte",
+        "alter",
+        "alteration",
+        "alterasion",
+        "alteracao",
+        "alteracão",
+        "alteraçao",
+        "alteração"
+    ],
+    Creation: [
+        "cre",
+        "crea",
+        "creat",
+        "creation",
+        "cri",
+        "cria",
+        "criacao",
+        "criacão",
+        "criaçao",
+        "criação"
+    ],
+    Energy: [
+        "ene",
+        "ener",
+        "energy",
+        "energia"
+    ],
+    Entropy: [
+        "ent",
+        "entr",
+        "entropy",
+        "entropia"
+    ],
+    Influence: [
+        "inf",
+        "infl",
+        "influ",
+        "influence",
+        "influencia",
+        "influência"    
+    ],
+    Movement: [
+        "mov",
+        "move",
+        "movement",
+        "movi",
+        "movim",
+        "movimento"
+    ],
+    Prescience: [
+        "presc",
+        "presci",
+        "prescien",
+        "presciên",
+        "prescience",
+        "presciencia",
+        "presciência"
+    ],
+    Protection: [
+        "pro",
+        "prot",
+        "protec",
+        "protect",
+        "protection",
+        "proteç",
+        "proteção"
+    ]
+};
 
-const Fortitude = [
-    "for",
-    "fort",
-    "fortitude"
-];
-
-const Might = [
-    "mig",
-    "mgt",
-    "might",
-    "mihgt",
-    "str",
-    "strength",
-    "strenthg",
-    "strenhtg",
-    "forca",
-    "força"
-];
-
-const Learning = [
-    "lea",
-    "lear",
-    "learn",
-    "learning",
-    "apre",
-    "apren",
-    "aprend",
-    "aprendiz",
-    "aprendizado"
-];
-
-const Logic = [
-    "log",
-    "logi",
-    "logic",
-    "lóg",
-    "lógi",
-    "lógic",
-    "lógica"
-];
-
-const Perception = [
-    "perc",
-    "perce",
-    "percep",
-    "perception",
-    "percepcao",
-    "percepçao",
-    "percepção"
-];
-
-const Will = [
-    "wil",
-    "will",
-    "wil",
-    "wil",
-    "vontade",
-    "vont"
-];
-
-const Deception = [
-    "dec",
-    "decep",
-    "deception",
-    "decepção",
-    "decepcão",
-    "decepçao",
-    "decepcao"
-];
-
-const Persuasion = [
-    "pers",
-    "persuasion",
-    "persuation",
-    "persuasao",
-    "persuazao",
-    "persuasão",
-    "persuazão"
-];
-
-const Presence = [
-    "prese",
-    "presence",
-    "presenca",
-    "presença"
-];
-
-const Alteration = [
-    "al",
-    "alt",
-    "alte",
-    "alter",
-    "alteration",
-    "alterasion",
-    "alteracao",
-    "alteracão",
-    "alteraçao",
-    "alteração"
-];
-
-const Creation = [
-    "cre",
-    "crea",
-    "creat",
-    "creation",
-    "cri",
-    "cria",
-    "criacao",
-    "criacão",
-    "criaçao",
-    "criação"
-];
-
-const Energy = [
-    "ene",
-    "ener",
-    "energy",
-    "energia"
-];
-
-const Entropy = [
-    "ent",
-    "entr",
-    "entropy",
-    "entropia"
-];
-
-const Influence = [
-    "inf",
-    "infl",
-    "influ",
-    "influence",
-    "influencia",
-    "influência"    
-];
-
-const Movement = [
-    "mov",
-    "move",
-    "movement",
-    "movi",
-    "movim",
-    "movimento"
-];
-
-const Prescience = [
-    "presc",
-    "presci",
-    "prescien",
-    "presciên",
-    "prescience",
-    "presciencia",
-    "presciência"
-];
-
-const Protection = [
-    "pro",
-    "prot",
-    "protec",
-    "protect",
-    "protection",
-    "proteç",
-    "proteção"
-];
+const Resources = {
+    HP: [
+        "hp",
+        "health",
+        "healthpoints",
+        "hitpoints",
+        "vida",
+        "saude",
+        "saúde"
+    ],
+    MP: [
+        "mp",
+        "mana",
+        "manapoint",
+        "manapoints",
+        "magicpoints",
+        "magic",
+    ],
+    Stamina: [
+        "stamina",
+        "estamina"
+    ]
+};
 // setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**

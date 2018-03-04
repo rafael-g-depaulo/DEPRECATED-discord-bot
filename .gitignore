@@ -5,3 +5,4 @@ jsconfig.json
 .vs/slnx.sqlite
 .vs/Discord-Bot/v15/.suo
 users/*
+media/*
