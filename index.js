@@ -86,7 +86,7 @@ bot.on('message', (message) => {
 
                 // if already creating a character
                 if (users[id].isCreatingChar) {
-                    message.author.send("Você já está no meio da criação de um personagem. Quer descartar esse personagem incompleto e criar outro?");
+                    str += "Você já está no meio da criação de um personagem. Quer descartar esse personagem incompleto e criar outro?";
                     users[id].resetCharCreationConfirm = true;
                     break;
                 }
@@ -110,7 +110,7 @@ bot.on('message', (message) => {
                 // se a pessoa não tem personagens
                 if (!users[id].hasOwnProperty("chars") || users[id].chars.constructor !== Array
                     || users[id].chars.length === 0 || users[id].chars[0].step !== "complete") {
-                        message.author.send("Você nem personagens prontos tem e quer mudar qual deles tá ativo? Vá criar um personagem antes");
+                        str += "Você nem personagens prontos tem e quer mudar qual deles tá ativo? Vá criar um personagem antes";
                         break;
                     }
 
@@ -134,40 +134,37 @@ bot.on('message', (message) => {
                     if (char.length === 1) {
                         // se o personagem achado é o personagem ativo atualmente
                         if (char[0].id === users[id].activeCharId) {
-                            message.author.send(actChar.name+" já é o personagem ativo.");
+                            str += actChar.name+" já é o personagem ativo.";
                         } else {
                             users[id].isConfirmingNewActiveChar = true;
                             users[id].possibleNewActiveCharID = char[0].id;
-                            message.author.send("Quer mudar seu personagem ativo de "+ actChar.name +" para "+ char[0].name
-                            +"? Por favor digite sim para confirmar, ou qualquer outra coisa para reverter a mudança");
+                            str += "Quer mudar seu personagem ativo de "+ actChar.name +" para "+ char[0].name
+                            +"? Por favor digite sim para confirmar, ou qualquer outra coisa para reverter a mudança";
                         }
                     }
                     // if more than one chars found
                     else if (char.length > 1) {
-                        let msg = "Multiplos personagens com nomes compatíveis achados. Os personagens achados com nomes compatíveis são: \n";
+                        str += "Multiplos personagens com nomes compatíveis achados. Os personagens achados com nomes compatíveis são: \n";
                         for (let i = 0; i < char.length; i++) {
-                            msg += "\t\t" + i+1 + ") " + char[i].name;
+                            str += "\t\t" + i+1 + ") " + char[i].name;
                             if (i == char.length-1 && users[id].hasOwnProperty("isCreatingChar"))
-                                msg += "(em progresso)";
-                            msg += "\n";
+                                str += "(em progresso)";
+                            str += "\n";
                         }
-                        msg += "\nQual o número do personagem que você quer deixar ativo?";
-                        message.author.send(msg);
+                        str += "\nQual o número do personagem que você quer deixar ativo?";
                         users[id].isChosingActiveChar = true;
                     }
                     // if no chars found
                     else {
-                        message.author.send("Você não tem nenhum personagem com esse nome.");
+                        str += "Você não tem nenhum personagem com esse nome.";
                     }
 
                 // se não
                 } else {
-                    let msg = "Os personagens que você tem são: \n\n";
+                    str += "Os personagens que você tem são: \n\n";
                     for (let i = 0; i < users[id].chars.length; i++)
-                        msg += "\t\t" + (1+i) + ") " + users[id].chars[i].name
-                        msg+= "\n";
-                    msg += "\nQual o número do personagem que você quer deixar ativo?"
-                    message.author.send(msg);
+                        str += "\t\t" + (1+i) + ") " + users[id].chars[i].name + "\n";
+                    str += "\nQual o número do personagem que você quer deixar ativo?";
                     users[id].isChosingActiveChar = true;
                 }
                 
@@ -178,16 +175,13 @@ bot.on('message', (message) => {
 
                 // se o usuário não tem personagem ativo
                 if (!users[id].hasOwnProperty("activeCharId"))
-                    message.author.send("Você não tem um personagem ativo. Crie um com !createChar");
+                    str += "Você não tem um personagem ativo. Crie um com !createChar";
 
                 // se o usuario tem personagem ativo
                 else {
-                    
-                    let msg = "";
-
                     switch (actChar.system) {
                         case "Open Legend - Fantasy Battle":
-                            msg += "Seu personagem ativo é "+ actChar.name + ". Seus stats são:\n\n"
+                            str += "Seu personagem ativo é "+ actChar.name + ". Seus stats são:\n\n"
 
                             + "\t**Physical**:\n"
                                 +  "\t\tAgility: "    + actChar.Agility     + "\n"
@@ -215,7 +209,6 @@ bot.on('message', (message) => {
                                 +  "\t\tPrescience: " + actChar.Prescience  + "\n"
                                 +  "\t\tProtection: " + actChar.Protection;
 
-                            message.author.send(msg);
                             break;
                     }
                 }
@@ -431,13 +424,13 @@ bot.on('message', (message) => {
         }
 
         // se é pra mandar alguma coisa
-        if (str !== "" || attach !== {}) {
-            if (attach !== {})
+        if (str !== "") {
+            if (Object.keys(attach).length !== 0)
                 message.channel.send(str, attach);
             else
                 message.channel.send(str);
             return;
-        }   
+        }
     }
 
     // se é uma conversa com o bot
