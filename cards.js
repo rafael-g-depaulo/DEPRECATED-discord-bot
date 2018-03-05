@@ -51,15 +51,15 @@ exports.draw = function() {
 }
 
 /** 
- * @description checks if a card was mentioned and exists, and returns it's named if yes
+ * @description checks if a card was mentioned and exists in the given array, and returns it's named if yes
  * 
- * @param {string} str string to be tested for card names
- * @param {Character} char string to be tested for card names
+ * @param {string}  str string to be tested for card names
+ * @param {object}  arr array of strings to be tested for matches
  * 
  * @returns {string[]|boolean}    an array containing the names of the cards found, or false, if none was found
  * 
 */
-exports.namesCard = function(str, char) {
+exports.namesCard = function(str, arr) {
 
     // declare variables
     let symbol = "", suit = "";
@@ -118,8 +118,8 @@ exports.namesCard = function(str, char) {
 
     // if user entered a specific card, search for it
     else if (enterCard.search("_") !== -1) {
-        for (card in char.cards)
-            if (char.cards.hasOwnProperty(card) && enterCard === card)
+        for (card in arr)
+            if (arr.hasOwnProperty(card) && enterCard === card)
                 return [enterCard];
     }
 
@@ -127,8 +127,8 @@ exports.namesCard = function(str, char) {
     else {
         let matched = [];
 
-        for (card in char.cards) {
-            if (char.cards.hasOwnProperty(card) && card.split("_")[0] === enterCard)
+        for (card in arr) {
+            if (arr.hasOwnProperty(card) && card.split("_")[0] === enterCard)
                 matched.push(card);
         }
 
@@ -210,8 +210,77 @@ exports.getCardName = function(str) {
             break;
     }
 
+    // take care of joker
+    if (str === "RED_JOKER")
+        retVal = "coringa vermelho";
+    else if (str === "BLACK_JOKER")
+        retVal = "conringa preto";
+
     return retVal;
 }
+
+/**
+ * @description get the effects of a given card
+ * 
+ * @param {string} str a card whose effects are to be checked
+ * 
+ * @returns {string} string describing the cards effects
+ */
+exports.getCardEffects = function(str) {
+    // set up return variable
+    let effect = "";
+    let suitEffect = "";
+
+    // if joker
+    if (str === "BLACK_JOKER" || str === "RED_JOKER") {
+        // get new random card
+        let card = "";
+        while (card === "BLACK_JOKER" || card === "RED_JOKER" || card === "")
+            card = exports.draw();
+
+        // if black use first suit effect. if red, use second
+        console.log(card);
+        if (str === "BLACK_JOKER")
+            suitEffect = suitEffects[card.split("_")[1]][0];
+        else if (str === "RED_JOKER")
+            suitEffect = suitEffects[card.split("_")[1]][0];
+
+        // tell user what happened
+        effect += exports.getCardName(str) + " usado! O coringa ganhou o efeito d";
+        if (card.search("Q") !== -1)
+            effect += "a";
+        else
+            effect += "o";
+        effect += " " + exports.getCardName(card) + ".\n"
+
+        str = card;
+    }
+    
+    // get card data
+    let symbol = str.split("_")[0];
+    let suit   = str.split("_")[1];
+
+    // if king
+    if (symbol === "K") {
+        effect += symbEffects[symbol] + "!\n\n" +
+            "\t1) " + suitEffects[suit][0] + ".\n" +
+            "\t2) " + suitEffects[suit][1] + ".";
+    }
+    // if joker
+    else if (suitEffect !== "") {
+        effect += symbEffects[symbol] + ". Além disso, você ganha o efeito abaixo: \n"
+            + suitEffect + ".";
+    }
+    // else
+    else {
+        effect += symbEffects[symbol] + ". Além disso, você pode escolher ativar um dos seguintes efeitos:\n\n" +
+            "\t1) " + suitEffects[suit][0] + ".\n" +
+            "\t2) " + suitEffects[suit][1] + ".";
+    }
+
+    return effect;
+}
+
 const symbols = {
     A: [
         "a",
@@ -328,7 +397,7 @@ const suits = {
         "espadas",
         "spades"
     ]
-}
+};
 const colors = {
     BLACK: [
         "preto",
@@ -338,4 +407,37 @@ const colors = {
         "vermelho",
         "red"
     ]
-}
+};
+const suitEffects = {
+    CLUBS: [
+        "+1 vantagem no seu próximo ataque (acerto & dano). Esse ataque ignora Guard e Dodge",
+        "-1 desvantagem no próximo ataque que você receber (acerto & dano)"
+    ],
+    DIAMONDS: [
+        "Você tem uma Ação Maior a mais no seu próximo turno",
+        "Escolha um inimigo. No próximo turno dele, ele não terá a sua Ação Maior"
+    ],
+    HEARTS: [
+        "Escolha um tipo de dano. Você tem resistência a ele até o final do seu próximo turno. Se já for resistente ao tipo de dano, você ganha imunidade a ele",
+        "Escolha um inimigo e um tipo de dano. Esse inimigo perde resistência a esse tipo de dano até o final do seu próximo turno. Se o inimigo não tiver resistência ao tipo de dano escolhido, ele tem fraqueza contra esse dano até o final do seu próximo turno"
+    ],
+    SPADES: [
+        "Seu próximo ataque causa dano máximo, mas não explode",
+        "O próximo ataque inimigo que você receber causa dano mínimo"
+    ]
+};
+const symbEffects = {
+    A: "O próximo ataque que você fizer ou Skill de dano ou cura que você usar recebe +2 no Attributo relevante no Dano/Cura",
+    2: "Você recupera toda a sua Stamina",
+    3: "Você pode se mover o dobro da sua velocidade padrão nesse turno",
+    4: "Você ganha Guard equivalente a seu Level +2 até o fim do seu próximo turno",
+    5: "A próxima Skill que você usar não custa Mana nem Stamina",
+    6: "A sua próxima rolagem de atributo tem sucesso automático (a não ser que o mestre diga que não)",
+    7: "Você ganha Dodge equivalente a seu Level até o fim do seu próximo turno",
+    8: "Você recupera metade da sua Mana máxima",
+    9: "Você recupera um quarto da sua Vida Máxima",
+    10: "A próxima rolagem de atributo contra você tem -1 desvantagem",
+    J: "Você ganha 2 Legend Points",
+    Q: "Role um 1d6. Se deu 6, compre outra carta!",
+    K: "Você pode ativar os dois efeitos a baixo em vez de um só"
+};

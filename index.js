@@ -24,6 +24,10 @@ bot.on('ready', () => {
 
 // on message to bot
 bot.on('message', (message) => {
+
+    // stop bot from talking to itself
+    if (message.author.bot) return;
+
     // set up important variables
     let id = message.author.id;              // user id
     
@@ -435,7 +439,36 @@ bot.on('message', (message) => {
 
     // se é uma conversa com o bot
     else {
-
+        if (actChar.hasOwnProperty("conversation")) {
+            switch (actChar.system) {
+                case 'Open Legend - Fantasy Battle':
+                    // if a direct command, apply it with the active character
+                    if (res = FB.command(message.content, actChar)) {
+                        str = res.msg;
+                        attach = res.attach;
+                        actChar = res.char;
+                        fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
+                    }
+                    // if dealing directly with a characer
+                    else if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]))
+                        if (res = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0]))) {
+                            str = res.msg;
+                            attach = res.attach;
+                            actChar = res.char;
+                            fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
+                        }
+                    break;
+                // no default needed. all possibilities for actChar.system are exausted
+            }
+            // se é pra mandar alguma coisa
+            if (str !== "") {
+                if (Object.keys(attach).length !== 0)
+                    message.channel.send(str, attach);
+                else
+                    message.channel.send(str);
+                return;
+            }
+        }
         // se está no processo de confirmação de parar o processo de criação de um personagem e começar outro
         if (users[id].resetCharCreationConfirm) {
             if (message.content.toLowerCase().trim() === "yes" || message.content.toLowerCase().trim() === "y" ||
