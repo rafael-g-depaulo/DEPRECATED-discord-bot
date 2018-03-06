@@ -407,8 +407,10 @@ exports.command = function(cmd, char) {
             // se não entrou nenhum card de argumento, e o usuário tem vários cards
             else {
                 msg += "Você tem multiplas cartas. Qual delas você quer usar?\n";
+                let charCards = [];
                 for (let i = 0; i < Object.keys(char.cards).length; i++) {
                     if (char.cards.hasOwnProperty(Object.keys(char.cards)[i])) {
+                        charCards.push(Object.keys(char.cards)[i]);
                         msg += "\n\t" + (i+1) + ") " + cards.getCardName(Object.keys(char.cards)[i]);
                         if (char.cards[Object.keys(char.cards)[i]] > 1)
                             msg += " (x" + char.cards[Object.keys(char.cards)[i]] + ")";
@@ -416,73 +418,100 @@ exports.command = function(cmd, char) {
                 }
 
                 char.conversation = "choseSpendCard";
-                char.cardChosing = char.cards;
+                char.cardChosing = charCards;
             }
         }
     }
-    // if it wasn't a valid command, check if in a conversation with the bot regarding the character
-    else if (char.hasOwnProperty("conversation")) {
-        // chosing card to spend
-        if (char.conversation === "choseSpendCard") {
-            let card = "";
-            // if valid card was mentioned
-            if ((card = cards.namesCard(cmd, char.cardChosing))) {
-                card = card[0];
-                char.cardSpending = card;
-                char.conversation = "spendCardConfirm";
-
-                msg += "Tem certeza que quer usar ";
-                if (card.search("Q") !== -1)
-                    msg += "a ";
-                else
-                    msg += "o ";
-                msg += cards.getCardName(card) + "?";
-            }
-            // if no valid card was mentioned
-            else {
-                msg += "Opção inválida! Idiota.";
-                delete char.conversation;
-                delete char.cardChosing;
-            }
-        }
-        // chosing card to spend
-        else if (char.conversation === "spendCardConfirm") {
-            console.log("confirming");
-            if (command === "yes" || command === "y" || command === "sim" || command === "s") {
-                msg += cards.getCardName(char.cardSpending) + " usad";
-                if (char.cardSpending.search("Q") !== -1)
-                    msg += "a. ";
-                else
-                    msg += "o. ";
-                if (char.cardSpending.search("JOKER") !== -1)
-                    msg += char.name + " ganha o seguinte efeito:\n\n";
-                else
-                    msg += char.name + " ganha os seguintes efeitos:\n\n";
-                
-                msg += cards.getCardEffects(char.cardSpending);
-
-                char.cards[char.cardSpending]--;
-                if (char.cards[char.cardSpending] === 0)
-                    delete char.cards[char.cardSpending];
-                if (Object.keys(char.cards).length === 0)
-                    delete char.cards;
-                delete char.conversation;
-                delete char.cardSpending;
-            }
-            else if (command === "nao" || command === "não" || command === "no" || command === "n") {
-                msg += "Ok! então a carta não será usada.";
-                delete char.conversation;
-                delete char.cardSpending;
-            }
-            else {
-                msg += "Eu não entendi. aprende a escrever, oh idiota.";
-            }
-        }
-    }
+// if it wasn't a valid command, check if in a conversation with the bot regarding the character
     // else, return false
     else {
         return false;
     }
+
+    return {
+        msg: msg,
+        char: char,
+        attach: attach
+    };
+}
+
+exports.conversation = function(cmd, char) {
+    let msg = "";
+    let attach = {};
+
+    // chosing card to spend
+    if (char.conversation === "choseSpendCard") {
+        let card = "";
+        // if valid card was mentioned
+        if ((card = cards.namesCard(cmd, char.cardChosing))) {
+            card = card[0];
+            char.cardSpending = card;
+            char.conversation = "spendCardConfirm";
+
+            msg += "Tem certeza que quer usar ";
+            if (card.search("Q") !== -1)
+                msg += "a ";
+            else
+                msg += "o ";
+            msg += cards.getCardName(card) + "?";
+        }
+        // if called it by number
+        else if (!Number.isNaN(cmd.trim()) && Number(cmd.trim()) > 0 && Number(cmd.trim()) <= char.cardChosing.length) {
+            card = char.cardChosing[Number(cmd.trim())-1];
+            char.cardSpending = card;
+            char.conversation = "spendCardConfirm";
+
+            msg += "Tem certeza que quer usar ";
+            if (card.search("Q") !== -1)
+                msg += "a ";
+            else
+                msg += "o ";
+            msg += cards.getCardName(card) + "?";
+        }
+        // if no valid card was mentioned
+        else {
+            msg += "Opção inválida! Idiota.";
+            delete char.conversation;
+            delete char.cardChosing;
+        }
+    }
+    // confirming card to spend
+    else if (char.conversation === "spendCardConfirm") {
+        console.log("sdas");
+        let command = cmd.trim().split(" ")[0].toLowerCase().trim();
+        if (command === "yes" || command === "y" || command === "sim" || command === "s") {
+            msg += cards.getCardName(char.cardSpending) + " usad";
+            if (char.cardSpending.search("Q") !== -1)
+                msg += "a. ";
+            else
+                msg += "o. ";
+            if (char.cardSpending.search("JOKER") !== -1)
+                msg += char.name + " ganha o seguinte efeito:\n\n";
+            else
+                msg += char.name + " ganha os seguintes efeitos:\n\n";
+            
+            msg += cards.getCardEffects(char.cardSpending);
+
+            char.cards[char.cardSpending]--;
+            if (char.cards[char.cardSpending] === 0)
+                delete char.cards[char.cardSpending];
+            if (Object.keys(char.cards).length === 0)
+                delete char.cards;
+            delete char.conversation;
+            delete char.cardSpending;
+        }
+        else if (command === "nao" || command === "não" || command === "no" || command === "n") {
+            msg += "Ok! então a carta não será usada.";
+            delete char.conversation;
+            delete char.cardSpending;
+        }
+        else {
+            msg += "Eu não entendi. aprende a escrever, oh idiota.";
+        }
+    }
+
+    if (msg !== "")
+        delete char.conversation;
 
     return {
         msg: msg,

@@ -41,6 +41,8 @@ bot.on('message', (message) => {
         users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
     }
 
+    let str = "", attach = {};               // response string and attachment
+    let resp = false;                        // response of command attempt from the modules
     // pegando o personagem ativo
     let actChar;
     if (users[id].hasOwnProperty("activeCharId"))
@@ -48,9 +50,8 @@ bot.on('message', (message) => {
 
     // checando se foi um comando
     if (message.content.slice(0, 1) === '!') {
-        const cmd = message.content.slice(1);    // shorthand for the entered command
-        let str = "", attach = {};               // response string and attachment
-        let resp = false;                        // response of command attempt from the modules
+        const cmd = message.content.slice(1);   // shorthand for the entered command
+        delete actChar.conversation;            // delete conversation actChar was in
 
         // check if has a character, and then if using a command involving a RPG system
         if (users[id].hasOwnProperty("activeCharId")) {
@@ -439,24 +440,17 @@ bot.on('message', (message) => {
 
     // se é uma conversa com o bot
     else {
+        let str = "";
         if (actChar.hasOwnProperty("conversation")) {
             switch (actChar.system) {
                 case 'Open Legend - Fantasy Battle':
                     // if a direct command, apply it with the active character
-                    if (res = FB.command(message.content, actChar)) {
+                    if (res = FB.conversation(message.content, actChar)) {
                         str = res.msg;
                         attach = res.attach;
                         actChar = res.char;
                         fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
                     }
-                    // if dealing directly with a characer
-                    else if (hasChar(users[id], cmd.trim().toLowerCase().split(" ")[0]))
-                        if (res = FB.command(cmd.slice(cmd.split(" ")[0].length + 1), getChar(users[id], cmd.split(" ")[0]))) {
-                            str = res.msg;
-                            attach = res.attach;
-                            actChar = res.char;
-                            fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
-                        }
                     break;
                 // no default needed. all possibilities for actChar.system are exausted
             }
