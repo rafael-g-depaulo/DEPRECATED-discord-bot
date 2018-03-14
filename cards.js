@@ -54,9 +54,9 @@ exports.draw = function() {
  * @description checks if a card was mentioned and exists in the given array, and returns it's named if yes
  * 
  * @param {string}  str string to be tested for card names
- * @param {object}  arr array of strings to be tested for matches
+ * @param {string[]}  arr array of strings to be tested for matches
  * 
- * @returns {string[]|boolean}    an array containing the names of the cards found, or false, if none was found
+ * @returns {string[]}    an array containing the names of the cards found, or false, if none was found
  * 
 */
 exports.namesCard = function(str, arr) {
@@ -65,17 +65,17 @@ exports.namesCard = function(str, arr) {
     let symbol = "", suit = "";
     let words = str.replace(/(,|\.)/g, '').toLowerCase().split(" ");
     let enterCard = "";
-
     // loop over all words, and grab all cards named
     for (let i = 0; i < words.length; i++) {
         // if no symbol found yet
         if (symbol === "") {
             for (symName in symbols) {
-                for (symAlias of symbols[symName])
+                for (symAlias of symbols[symName]) {
                     if (words[i] === symAlias) {
                         symbol = symName;
                         break;
                     }
+                }
                 if (symbol !== "")
                     break;
             }
@@ -83,15 +83,14 @@ exports.namesCard = function(str, arr) {
         // if symbol found and wasn't joker, check for suit
         else if (symbol !== "JOKER") {
             for (suitName in suits) {
-                for (suitAlias of suits[suitName])
+                for (suitAlias of suits[suitName]) {
                     if (words[i] === suitAlias) {
                         suit = suitName;
                         break;
                     }
-                if (suit !== "") {
-                    enterCard = symbol+"_"+suit;
-                    break;
                 }
+                if (suit !== "")
+                    break;
             }
         }
         // if symbol was a joker, check for color
@@ -102,42 +101,42 @@ exports.namesCard = function(str, arr) {
                         suit = colorName;
                         break;
                     }
-                if (suit !== "") {
-                    enterCard = symbol+"_"+suit;
+                if (suit !== "")
                     break;
-                }
             }
         }
-        if (i === words.length - 1 && symbol !== "" && suit === "")
-            enterCard = symbol;
     }
 
-    // if no card mentioned, return false
-    if (enterCard === "")
-        return false;
+    // set up enterCard
+    enterCard = symbol;
+    if (suit !== "")
+        enterCard += "_" + suit;
 
+    // if nothing valid entered, return false
+    if (enterCard === "")
+        return [];
     // if user entered a specific card, search for it
     else if (enterCard.search("_") !== -1) {
-        for (card in arr)
-            if (arr.hasOwnProperty(card) && enterCard === card)
+        for (card of arr) {
+            if (enterCard === card) {
                 return [enterCard];
+            }
+        }
     }
 
     // if user entered only a card symbol, search for matches
     else {
         let matched = [];
-
-        for (card in arr) {
-            if (arr.hasOwnProperty(card) && card.split("_")[0] === enterCard)
+        for (card of arr)
+            if (card.split("_")[0] === symbol)
                 matched.push(card);
-        }
-
+        
         if (matched.length > 0)
             return matched;
     }
 
     // if no matches found, return false
-    return false
+    return []
 }
 
 /**
@@ -239,7 +238,6 @@ exports.getCardEffects = function(str) {
             card = exports.draw();
 
         // if black use first suit effect. if red, use second
-        console.log(card);
         if (str === "BLACK_JOKER")
             suitEffect = suitEffects[card.split("_")[1]][0];
         else if (str === "RED_JOKER")
@@ -279,6 +277,16 @@ exports.getCardEffects = function(str) {
     }
 
     return effect;
+}
+
+exports.arraify = function(obj) {
+    let retVal = [];
+    for (i in obj) {
+        if (obj.hasOwnProperty(i))
+            retVal.push(i);
+    }
+
+    return retVal;
 }
 
 const symbols = {
@@ -441,3 +449,10 @@ const symbEffects = {
     Q: "Role um 1d6. Se deu 6, compre outra carta!",
     K: "Você pode ativar os dois efeitos a baixo em vez de um só"
 };
+
+
+const obj = {"6_SPADES": 1,"8_CLUBS": 3,"8_DIAMONDS": 2};
+const arrr = ["6_SPADES","8_CLUBS","8_DIAMONDS"];
+console.log(obj);
+console.log(exports.arraify(obj));
+console.log(exports.namesCard("8 de clubs", arrr));

@@ -377,7 +377,7 @@ exports.command = function(cmd, char) {
                 char.cardSpending = card;
             }
             // se falou um card pelo nome
-            else if ((matchCards = cards.namesCard(cmd, char.cards))) {
+            else if ((matchCards = cards.namesCard(cmd, cards.arraify(char.cards))).length >= 1) {
                 // if just one match
                 if (matchCards.length === 1) {
                     // send user message
@@ -441,9 +441,9 @@ exports.conversation = function(cmd, char) {
 
     // chosing card to spend
     if (char.conversation === "choseSpendCard") {
-        let card = "";
+        let card = cards.namesCard(cmd, char.cardChosing);
         // if valid card was mentioned
-        if ((card = cards.namesCard(cmd, char.cardChosing))) {
+        if (card.length >= 1) {
             card = card[0];
             char.cardSpending = card;
             char.conversation = "spendCardConfirm";
@@ -477,7 +477,6 @@ exports.conversation = function(cmd, char) {
     }
     // confirming card to spend
     else if (char.conversation === "spendCardConfirm") {
-        console.log("sdas");
         let command = cmd.trim().split(" ")[0].toLowerCase().trim();
         if (command === "yes" || command === "y" || command === "sim" || command === "s") {
             msg += cards.getCardName(char.cardSpending) + " usad";

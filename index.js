@@ -27,6 +27,8 @@ bot.on('message', (message) => {
 
     // stop bot from talking to itself
     if (message.author.bot) return;
+    // if message comes from invalid chat room, return
+    if (message.channel.name === "general" || message.channel.name === "links-e-afim") return;
 
     // set up important variables
     let id = message.author.id;              // user id
@@ -44,14 +46,15 @@ bot.on('message', (message) => {
     let str = "", attach = {};               // response string and attachment
     let resp = false;                        // response of command attempt from the modules
     // pegando o personagem ativo
-    let actChar;
+    let actChar = undefined;
     if (users[id].hasOwnProperty("activeCharId"))
         actChar = users[id].chars[users[id].activeCharId];
 
     // checando se foi um comando
     if (message.content.slice(0, 1) === '!') {
         const cmd = message.content.slice(1);   // shorthand for the entered command
-        delete actChar.conversation;            // delete conversation actChar was in
+        if (actChar !== undefined && actChar.hasOwnProperty("conversation"))
+            delete actChar.conversation;        // delete conversation actChar was in
 
         // check if has a character, and then if using a command involving a RPG system
         if (users[id].hasOwnProperty("activeCharId")) {
@@ -441,7 +444,7 @@ bot.on('message', (message) => {
     // se é uma conversa com o bot
     else {
         let str = "";
-        if (actChar.hasOwnProperty("conversation")) {
+        if (actChar !== undefined && actChar.hasOwnProperty("conversation")) {
             switch (actChar.system) {
                 case 'Open Legend - Fantasy Battle':
                     // if a direct command, apply it with the active character
