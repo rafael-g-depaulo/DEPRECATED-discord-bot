@@ -367,7 +367,9 @@ const getNextDie = function(_args, index) {
     let rollStr = /[0-9]* *d *[0-9]+ *!*/i.exec(args)[0].toString().toLowerCase();
     // check if there are future rolls after this one. if there are, cut the string to not grab advantage/bonus from future rolls
     let postRollArg = args.slice(args.search(rollStr) + rollStr.length);
-    
+    // update next to be at the start of the next roll
+    next = index + args.search(rollStr) + rollStr.length -1;
+
     if (/[0-9]* *d *[0-9]+/i.test(postRollArg)) {
         // get everything possible in between the current roll and the start of the next one
         postRollArg = postRollArg.slice(0, /[0-9]* *d *[0-9]+/i.exec(postRollArg).index);
@@ -375,10 +377,9 @@ const getNextDie = function(_args, index) {
         // and now slice args no not contain anything past the end of postRollArg, and update next;
         args = args.slice(0, args.indexOf(postRollArg) + postRollArg.length);
     }
-    // update next to be at the start of the next roll
-    next = index + args.length;
+
     // if args doesnt contain the rollStr, add rollStr.length to next;
-    if (!/[0-9]* *d *[0-9]+ *!*/i.test(args))
+    if (!/[0-9]* *d *[0-9]+ *!*/i.test(_args.slice(index)))
         next +=rollStr.length;
 
     // get the dice args

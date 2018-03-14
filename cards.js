@@ -60,7 +60,6 @@ exports.draw = function() {
  * 
 */
 exports.namesCard = function(str, arr) {
-
     // declare variables
     let symbol = "", suit = "";
     let words = str.replace(/(,|\.)/g, '').toLowerCase().split(" ");
@@ -76,8 +75,11 @@ exports.namesCard = function(str, arr) {
                         break;
                     }
                 }
-                if (symbol !== "")
+                if (symbol !== "") {
+                    if (symbol === "JOKER")
+                        i = 0;
                     break;
+                }
             }
         }
         // if symbol found and wasn't joker, check for suit
@@ -147,10 +149,10 @@ exports.namesCard = function(str, arr) {
  * @returns {string} the name of the card in portuguese
  */
 exports.getCardName = function(str) {
+    let retVal = "";
+
     let symbol = str.split("_")[0];
     let suit   = str.split("_")[1];
-
-    let retVal = "";
 
     switch (symbol) {
         case 'A':
@@ -210,9 +212,9 @@ exports.getCardName = function(str) {
     }
 
     // take care of joker
-    if (str === "RED_JOKER")
+    if (str === "JOKER_RED")
         retVal = "coringa vermelho";
-    else if (str === "BLACK_JOKER")
+    else if (str === "JOKER_BLACK")
         retVal = "conringa preto";
 
     return retVal;
@@ -445,14 +447,7 @@ const symbEffects = {
     8: "Você recupera metade da sua Mana máxima",
     9: "Você recupera um quarto da sua Vida Máxima",
     10: "A próxima rolagem de atributo contra você tem -1 desvantagem",
-    J: "Você ganha 2 Legend Points",
+    J: "Você ganha 1 Legend Point",
     Q: "Role um 1d6. Se deu 6, compre outra carta!",
     K: "Você pode ativar os dois efeitos a baixo em vez de um só"
 };
-
-
-const obj = {"6_SPADES": 1,"8_CLUBS": 3,"8_DIAMONDS": 2};
-const arrr = ["6_SPADES","8_CLUBS","8_DIAMONDS"];
-console.log(obj);
-console.log(exports.arraify(obj));
-console.log(exports.namesCard("8 de clubs", arrr));
