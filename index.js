@@ -228,6 +228,14 @@ bot.on('message', (message) => {
                 str += Dice.rollDice(Dice.getDiceRoll(cmd), list, sum, false);
                 break;
 
+            case 'secretroll':
+            case 'secretoroll':
+            case 'secretorola':
+            case 'secretorolagem':
+            case 'rolagemsecreta':
+                message.author.send(Dice.rollDice(Dice.getDiceRoll(cmd), list, sum, false))
+                break;
+
             default:
 
                 // se está mexendo com um personagem diretamente

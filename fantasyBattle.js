@@ -32,6 +32,23 @@ exports.rollAttribute = function (attribute, adv) {
         list, true, false);
 }
 
+exports.rollAttack = function (attribute, adv) {
+    adv = adv || 0;
+    let list = false;
+    if (adv !== 0)
+        list = true;
+
+    return Dice.rollDice(
+        [{
+            diceQnt: 1,
+            diceMax: 20,
+            diceAdv: adv,
+            diceBonus: attribute,
+            explode: false
+        }],
+        list, true, false);
+}
+
 exports.rollInitiative = function (agility, adv) {
     adv = adv || 0;
     let list = false;
@@ -49,8 +66,9 @@ exports.rollInitiative = function (agility, adv) {
         list, true, false);
 }
 
-exports.rollDamage = function (attribute, adv) {
+exports.rollDamage = function (attribute, adv, superExp) {
     adv = adv || 0;
+    superExp = superExp || false;
     let list = false;
     if (adv !== 0)
         list = true;
@@ -60,6 +78,7 @@ exports.rollDamage = function (attribute, adv) {
     dice.diceAdv = adv;
     dice.diceBonus = 0;
     dice.explode = true;
+    dice.superExplode = superExp;
 
     switch (attribute) {
         case 0:
@@ -509,8 +528,8 @@ exports.conversation = function(cmd, char) {
         }
     }
 
-    if (msg !== "")
-        delete char.conversation;
+    // if (msg === "")
+    //     delete char.conversation;
 
     return {
         msg: msg,

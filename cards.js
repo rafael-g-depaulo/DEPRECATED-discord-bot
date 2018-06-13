@@ -233,16 +233,16 @@ exports.getCardEffects = function(str) {
     let suitEffect = "";
 
     // if joker
-    if (str === "BLACK_JOKER" || str === "RED_JOKER") {
+    if (str === "JOKER_BLACK" || str === "JOKER_RED") {
         // get new random card
         let card = "";
-        while (card === "BLACK_JOKER" || card === "RED_JOKER" || card === "")
+        while (card === "JOKER_BLACK" || card === "JOKER_RED" || card === "")
             card = exports.draw();
 
         // if black use first suit effect. if red, use second
-        if (str === "BLACK_JOKER")
+        if (str === "JOKER_BLACK")
             suitEffect = suitEffects[card.split("_")[1]][0];
-        else if (str === "RED_JOKER")
+        else if (str === "JOKER_RED")
             suitEffect = suitEffects[card.split("_")[1]][0];
 
         // tell user what happened
@@ -251,7 +251,7 @@ exports.getCardEffects = function(str) {
             effect += "a";
         else
             effect += "o";
-        effect += " " + exports.getCardName(card) + ".\n"
+        effect += " " + exports.getCardName(card) + ".\n\n"
 
         str = card;
     }

@@ -6,11 +6,12 @@
 /**
  * @typedef {Object} Roll
  * 
- * @property {Number} diceQnt   The quantity of that die to be rolled
- * @property {Number} diceMax   The maximum roll the die may reach
- * @property {Number} diceAdv   The ammount of advantage/disadvantage the roll has
- * @property {Number} diceBonus The bonus to be added to the roll
- * @property {Boolean} explode  Whether the dice should explode or not
+ * @property {Number} diceQnt       The quantity of that die to be rolled
+ * @property {Number} diceMax       The maximum roll the die may reach
+ * @property {Number} diceAdv       The ammount of advantage/disadvantage the roll has
+ * @property {Number} diceBonus     The bonus to be added to the roll
+ * @property {Boolean} explode      Whether the dice should explode or not
+ * @property {Boolean} superExplode Whether the dice should explode on the maximum, or the maximum AND the maximum-1
  */
 
 /**
@@ -223,8 +224,26 @@ const rollDie = function(die) {
         }
     }
 
+// taking care of super explosion
+    if (die.superExplode) {
+        for (let i = 0, max = numRolls.length; i < max; i++) {
+            // if max number reached and not to be deleted by (dis)advantage
+            if ((numRolls[i] >= die.diceMax-1) && rollsToBeDeleted.indexOf(i) === -1) {
+
+                // explode in that spot of the array and update rolls to be deleted
+                let s = Math.floor(Math.random() * die.diceMax + 1);
+                numRolls.splice(i+1, 0, s);
+                max++;
+                for (let j = 0; j < rollsToBeDeleted.length; j++) {
+                    if (rollsToBeDeleted[j] > i)
+                        rollsToBeDeleted[j]++;
+                }
+            }
+        }
+    }
+
 // taking care of explosion
-    if (die.explode) {
+    else if (die.explode) {
         for (let i = 0, max = numRolls.length; i < max; i++) {
             // if max number reached and not to be deleted by (dis)advantage
             if (numRolls[i] === die.diceMax && rollsToBeDeleted.indexOf(i) === -1) {
@@ -254,7 +273,7 @@ const rollDie = function(die) {
         if (rollsToBeDeleted.indexOf(i) !== -1)
             list += "~~";
         // making max rolls bold
-        else if (numRolls[i] === die.diceMax)
+        else if (numRolls[i] === die.diceMax || (die.superExplode && numRolls[i] === die.diceMax-1))
             list += "**";
 
         // putting the result
@@ -263,8 +282,8 @@ const rollDie = function(die) {
         // striking out results removed because of (dis)advantage
         if (rollsToBeDeleted.indexOf(i) !== -1)
             list += "~~";
-        // making max rolls bold
-        else if (numRolls[i] === die.diceMax) {
+        // making max rolls bold (and max-1 too, if superExplosion is happening)
+        else if (numRolls[i] === die.diceMax || (die.superExplode && numRolls[i] === die.diceMax-1)) {
             if (die.explode)
                 list += "!";
             list += "**";
@@ -325,9 +344,13 @@ const rollDie = function(die) {
 exports.getDiceRoll = function(args) {
     let rolls = [];
     let index = 0;
-
+    let i = 0;
     while (true) {
+        i++
+        console.log(""+i+").")
         let die = getNextDie(args, index);
+        // console.log("index: "+index+" ("+args.slice(index)+")")
+        // console.log("next: "+die.next+" ("+args.slice(die.next)+")")
         
         // if there is no other dice roll
         if (die === false) {
@@ -364,19 +387,20 @@ const getNextDie = function(_args, index) {
         return false;
 
     // get current roll command
-    let rollStr = /[0-9]* *d *[0-9]+ *!*/i.exec(args)[0].toString().toLowerCase();
+    let rollStr = /[0-9]* *d *[0-9]+ *!*[d]?/i.exec(args)[0].toString().toLowerCase();
     // check if there are future rolls after this one. if there are, cut the string to not grab advantage/bonus from future rolls
     let postRollArg = args.slice(args.search(rollStr) + rollStr.length);
     // update next to be at the start of the next roll
     next = index + args.search(rollStr) + rollStr.length -1;
 
+    // console.log("\nbefore: |"+postRollArg+"|")
     if (/[0-9]* *d *[0-9]+/i.test(postRollArg)) {
         // get everything possible in between the current roll and the start of the next one
         postRollArg = postRollArg.slice(0, /[0-9]* *d *[0-9]+/i.exec(postRollArg).index);
-        
         // and now slice args no not contain anything past the end of postRollArg, and update next;
         args = args.slice(0, args.indexOf(postRollArg) + postRollArg.length);
     }
+    // console.log("after: |"+postRollArg+"|\n")
 
     // if args doesnt contain the rollStr, add rollStr.length to next;
     if (!/[0-9]* *d *[0-9]+ *!*/i.test(_args.slice(index)))
@@ -398,18 +422,27 @@ const getNextDie = function(_args, index) {
     roll.explode = /!/.test(rollStr);
 
     // prevent d0's
-    if (roll.diceMax === 0)
+    if (roll.diceMax <= 0)
         roll.diceMax = 1;
 
     // prevent d1's with explosion
     if (roll.diceMax === 1)
         roll.explode = false;
     
-    // get bonus
-    if (/[0-9]* *d *[0-9]+ *!* *(\++|-+) *[0-9]+/i.test(args)) {
+    // // get bonus
+    // console.log("------------------------------------------------------------------------")
+    // console.log("args: |"+args+"|")
+    // console.log("postRollArg: |"+postRollArg+"|")
+    // console.log("------------------------------------------------------------------------")
+    if (/(\++|-+) *[0-9]+/i.test(postRollArg)) {
         // get the string with the bonus' information
-        let bonusStr = /(\++|-+) *[0-9]+/i.exec(args)[0];
-
+        console.log("------------------------------------------------------------------------")
+        console.log("args: |"+args+"|")
+        console.log("postRollArg: |"+postRollArg+"|")
+        let bonusStr = /(\++|-+) *[0-9]+/i.exec(postRollArg)[0];
+        console.log("bonusStr: |"+bonusStr+"|")
+        console.log("bonusStr index: "+/(\++|-+) *[0-9]+/i.exec(args).index)
+        console.log("------------------------------------------------------------------------")
         // update next to be after the bonus
         advIndex = args.indexOf(bonusStr) + bonusStr.length;
 
@@ -432,7 +465,9 @@ const getNextDie = function(_args, index) {
     }
     
     // get advantage
-    roll.diceAdv = getAdvantage(postRollArg);;
+    roll.diceAdv = getAdvantage(postRollArg);
+
+    roll.superExplode = getSuperExplosion(postRollArg);
 
     // set up return value
     let retVal = {};
@@ -440,6 +475,17 @@ const getNextDie = function(_args, index) {
     retVal.next = next;
 
     return retVal;
+}
+
+/**
+ * @description checks if the roll is suposed to super explode
+ * 
+ * @param {string} args    The string representing the command & arguments
+ * 
+ * @returns {Boolean}      If true, it super explodes. if false, no.
+ */
+const getSuperExplosion = function(args) {
+    return /super!/i.test(args)
 }
 
 /**
