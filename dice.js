@@ -513,7 +513,7 @@ const getAdvantage = function(args) {
     advRegStr += ")";
     let advRegExp = new RegExp(advRegStr, "i");
 
-    let disRegStr = "(";
+    let disRegStr = "(\\++|-+)? *[0-9]* *(";
     for (i in disadvantageWords) {
         if (i != 0)
             disRegStr += "|";
