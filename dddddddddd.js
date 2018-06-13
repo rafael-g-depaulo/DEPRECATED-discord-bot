@@ -38,16 +38,3 @@
 // console.log("media com vantagem 2: "+ totalAdv2)
 // console.log("media normal: "+ (dice+1)/2)
 // console.log("media com desvantagem: "+ totalDis)
-const Dice = require('./dice.js');
-
-// console.log(Dice.rollDice([{
-//   diceQnt: 4,
-//   diceMax: 6,
-//   diceAdv: 0,
-//   diceBonus: 0,
-//   explode: true,
-//   superExplode: false
-// }], true, false, true))
-const dice = Dice.getDiceRoll("!roll 5d6! +5 +2adv SupEr!  1d13 -2 van super!")
-console.log(dice)
-// console.log(Dice.rollDice(dice, true, true, true))

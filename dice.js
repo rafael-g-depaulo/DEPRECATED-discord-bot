@@ -344,13 +344,8 @@ const rollDie = function(die) {
 exports.getDiceRoll = function(args) {
     let rolls = [];
     let index = 0;
-    let i = 0;
     while (true) {
-        i++
-        console.log(""+i+").")
         let die = getNextDie(args, index);
-        // console.log("index: "+index+" ("+args.slice(index)+")")
-        // console.log("next: "+die.next+" ("+args.slice(die.next)+")")
         
         // if there is no other dice roll
         if (die === false) {
@@ -393,14 +388,12 @@ const getNextDie = function(_args, index) {
     // update next to be at the start of the next roll
     next = index + args.search(rollStr) + rollStr.length -1;
 
-    // console.log("\nbefore: |"+postRollArg+"|")
     if (/[0-9]* *d *[0-9]+/i.test(postRollArg)) {
         // get everything possible in between the current roll and the start of the next one
         postRollArg = postRollArg.slice(0, /[0-9]* *d *[0-9]+/i.exec(postRollArg).index);
         // and now slice args no not contain anything past the end of postRollArg, and update next;
         args = args.slice(0, args.indexOf(postRollArg) + postRollArg.length);
     }
-    // console.log("after: |"+postRollArg+"|\n")
 
     // if args doesnt contain the rollStr, add rollStr.length to next;
     if (!/[0-9]* *d *[0-9]+ *!*/i.test(_args.slice(index)))
@@ -430,19 +423,9 @@ const getNextDie = function(_args, index) {
         roll.explode = false;
     
     // // get bonus
-    // console.log("------------------------------------------------------------------------")
-    // console.log("args: |"+args+"|")
-    // console.log("postRollArg: |"+postRollArg+"|")
-    // console.log("------------------------------------------------------------------------")
     if (/(\++|-+) *[0-9]+/i.test(postRollArg)) {
         // get the string with the bonus' information
-        console.log("------------------------------------------------------------------------")
-        console.log("args: |"+args+"|")
-        console.log("postRollArg: |"+postRollArg+"|")
         let bonusStr = /(\++|-+) *[0-9]+/i.exec(postRollArg)[0];
-        console.log("bonusStr: |"+bonusStr+"|")
-        console.log("bonusStr index: "+/(\++|-+) *[0-9]+/i.exec(args).index)
-        console.log("------------------------------------------------------------------------")
         // update next to be after the bonus
         advIndex = args.indexOf(bonusStr) + bonusStr.length;
 
