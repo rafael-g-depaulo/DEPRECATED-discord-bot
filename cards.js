@@ -420,11 +420,11 @@ const colors = {
 };
 const suitEffects = {
     CLUBS: [
-        "+1 vantagem no seu próximo ataque (acerto & dano). Esse ataque ignora Guard e Dodge",
-        "-1 desvantagem no próximo ataque que você receber (acerto & dano)"
+        "+1 vantagem no seu próximo ataque nesse turno. Esse ataque ignora Guard e Dodge",
+        "-2 desvantagem no próximo ataque que você receber entre agora e o início do seu próximo turno"
     ],
     DIAMONDS: [
-        "Você tem uma Ação Maior a mais no seu próximo turno",
+        "Você pode trocar a sua Ação Menor e seu movimento por uma Ação Maior no seu próximo turno, ou ganhar uma Ação Menor adicional",
         "Escolha um inimigo. No próximo turno dele, ele não terá a sua Ação Maior"
     ],
     HEARTS: [
@@ -433,11 +433,11 @@ const suitEffects = {
     ],
     SPADES: [
         "Seu próximo ataque causa dano máximo, mas não explode",
-        "O próximo ataque inimigo que você receber causa dano mínimo"
+        "O próximo ataque inimigo que você receber até o seu próximo turno causa dano mínimo"
     ]
 };
 const symbEffects = {
-    A: "O próximo ataque que você fizer ou Skill de dano ou cura que você usar recebe +2 no Attributo relevante no Dano/Cura",
+    A: "O próximo ataque que você fizer ou Skill de dano ou cura que você usar nesse turno recebe +2 no Attributo relevante no Dano/Cura",
     2: "Você recupera toda a sua Stamina",
     3: "Você pode se mover o dobro da sua velocidade padrão nesse turno",
     4: "Você ganha Guard equivalente a seu Level +2 até o fim do seu próximo turno",

@@ -333,6 +333,7 @@ const rollDie = function(die) {
         resultSum : resSum
     }
 }
+exports.rollDie = rollDie
 
 /**
  * @description gets the roll commands in args
@@ -421,6 +422,10 @@ const getNextDie = function(_args, index) {
     // prevent d1's with explosion
     if (roll.diceMax === 1)
         roll.explode = false;
+
+    // prevent d2's with super explosion
+    if (roll.diceMax >= 2)
+        roll.superExplode = false;
     
     // // get bonus
     if (/(\++|-+) *[0-9]+/i.test(postRollArg)) {

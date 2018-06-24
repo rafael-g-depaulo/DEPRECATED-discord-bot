@@ -38,3 +38,42 @@
 // console.log("media com vantagem 2: "+ totalAdv2)
 // console.log("media normal: "+ (dice+1)/2)
 // console.log("media com desvantagem: "+ totalDis)
+
+
+// // const Dice = require('./dice.js')
+
+// // var totalRoll = 0;
+// // const diceQnt = 2;
+// // const diceMax = 6;
+// // const x = 1000;
+
+// // for (var i = 0; i < x; i++) {
+// //   totalRoll += Dice.rollDie({
+// //     diceMax: diceMax,
+// //     diceQnt: diceQnt,
+// //     diceBonus: 0,
+// //     diceAdv: 0,
+// //     explode: true,
+// //     superExplode: false
+// //   }).resultSum
+// // }
+
+// // console.log(diceQnt+"d"+diceMax+"!: "+(totalRoll/x))
+
+
+const Dice = require('./dice.js')
+const dice = {
+  diceMax: 6,
+  diceQnt: 2,
+  diceBonus: 6,
+  diceAdv: 0,
+  explode: false,
+  superExplode: false
+}
+
+console.log("STR: "+Dice.rollDie(dice).resultSum)
+console.log("DEX: "+Dice.rollDie(dice).resultSum)
+console.log("CON: "+Dice.rollDie(dice).resultSum)
+console.log("INT: "+Dice.rollDie(dice).resultSum)
+console.log("WIS: "+Dice.rollDie(dice).resultSum)
+console.log("CAR: "+Dice.rollDie(dice).resultSum)
