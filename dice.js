@@ -420,6 +420,7 @@ const getNextDie = function(_args, index) {
 
     // get explosion
     roll.explode = /!/.test(rollStr);
+    roll.superExplode = /!!/.test(rollStr);
 
     // prevent d0's
     if (roll.diceMax <= 0)
@@ -430,7 +431,7 @@ const getNextDie = function(_args, index) {
         roll.explode = false;
 
     // prevent d2's with super explosion
-    if (roll.diceMax >= 2)
+    if (roll.diceMax <= 2)
         roll.superExplode = false;
     
     // // get bonus
@@ -461,8 +462,6 @@ const getNextDie = function(_args, index) {
     // get advantage
     roll.diceAdv = getAdvantage(postRollArg);
 
-    roll.superExplode = getSuperExplosion(postRollArg);
-
     // set up return value
     let retVal = {};
     retVal.roll = roll;
@@ -471,16 +470,17 @@ const getNextDie = function(_args, index) {
     return retVal;
 }
 
-/**
- * @description checks if the roll is suposed to super explode
- * 
- * @param {string} args    The string representing the command & arguments
- * 
- * @returns {Boolean}      If true, it super explodes. if false, no.
- */
-const getSuperExplosion = function(args) {
-    return /super!/i.test(args)
-}
+// DEPRECATED. KEPT ONLY BECAUSE I MIGHT WANT TO GO BACK TO THE OLD WAY
+// /**
+//  * @description checks if the roll is suposed to super explode
+//  * 
+//  * @param {string} args    The string representing the command & arguments
+//  * 
+//  * @returns {Boolean}      If true, it super explodes. if false, no.
+//  */
+// const getSuperExplosion = function(args) {
+//     return /super!/i.test(args)
+// }
 
 /**
  * @description return the advantage in _args. Negative for disadvantage
@@ -581,15 +581,18 @@ exports.checkCommand = (cmdStr) => {
         msg: "",
         attach: {}
     }
+
     if (cmdStr.length <= 0 || cmdStr[0] !== '!')
         return false
+    if (!exports.isDiceRollCmd(cmdStr))
+        return false
 
-    cmdShrt = cmdStr.split(' ')[0].trim()
+    cmdShrt = cmdStr.split(' ')[0].trim().replace('!','')
 
     if (isInArray(cmdShrt, rollCmdWords))
-        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr.slice(cmdShrt.length).trim()), true, true, false)
+        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr), true, true, false)
     else if (isInArray(cmdShrt, sumWords))
-        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr.slice(cmdShrt.length).trim()), true, true, true)
+        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr), true, true, true)
 
     if (retVal.msg !== "")
         return retVal

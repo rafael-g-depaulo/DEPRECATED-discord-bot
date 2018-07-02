@@ -46,18 +46,13 @@ bot.on('message', (message) => {
         users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
     }
 
-    // pegando o personagem ativo
-    let actChar = undefined;
-    if (users[id].hasOwnProperty("activeCharId"))
-        actChar = users[id].chars[users[id].activeCharId];
-
 // test if command from a module
     // resultado do comando
-    let commandResult;
+    let commandResult = false;
     // checa se é um commando do/conversa com Fantasy Battle
-    commandResult = FB.checkCommand(cmd, users[id])
+    if (!commandResult) commandResult = FB.checkCommand(cmd, users[id])
     // checa se é um commando de rolagem de dado
-    commandResult = Dice.checkCommand(cmd)
+    if (!commandResult) commandResult = Dice.checkCommand(cmd)
     // se não, checa se é um commando do próximo modulo
     /********************* INSERT NEXT MODULE HERE ***********************/
 
@@ -66,9 +61,6 @@ bot.on('message', (message) => {
 // if there is something to send, send it
     if (commandResult) {
         fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
-
-        console.log("commandResult: ")
-        console.log(commandResult)
  
         if (Object.keys(commandResult.attach).length !== 0)
             message.channel.send(commandResult.msg, commandResult.attach);
@@ -76,51 +68,8 @@ bot.on('message', (message) => {
             message.channel.send(commandResult.msg);
         return;
     }
-    // guardar as informações no arquivo do usuário
-    fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
+    // // guardar as informações no arquivo do usuário
+    // fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
 })
-
-/**
- * @description checks if cmdStr is a valid command, and executes it if yes.
- * 
- * @param {string} cmdStr 
- * @param {User}   user
- * 
- * @return {{msg: string, attach: {}}|boolean} 
- */
-const checkCommand = (cmdStr, user) => {
-    return false;
-}
-
-/**
- * @description checks if a user has a specific character
- * 
- * @param {{chars: {name: string}[]}} user 
- * @param {string} char 
- * 
- * @returns {boolean}
- */
-const hasChar = function(user, char) {
-    char = char.toLowerCase().trim();
-    for (let i = 0; i < user.chars.length; i++)
-        if (user.chars[i].name.toLowerCase().trim().search(char) !== -1)
-            return true;
-    return false;
-}
-
-/**
- * @description returns a specific character the user has
- * 
- * @param {{chars: {name: string}[]}} user 
- * @param {string} char 
- * 
- * @returns {any} the character
- */
-const getChar = function(user, char) {
-    char = char.toLowerCase().trim();
-    for (let i = 0; i < user.chars.length; i++)
-        if (user.chars[i].name.toLowerCase().trim().search(char) !== -1)
-            return user.chars[i];
-}
 
 bot.login('NDAxNTM3MTYzMTEzNjYwNDM2.DUFImw.DhpAJ_Qd2hoIe14WdAK0KAd3qhI');

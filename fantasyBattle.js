@@ -224,16 +224,23 @@ exports.checkCommand = function(cmdStr, user) {
 
 }
 
+/**
+ * @description checks if att is a valid attribute name, then calls func(att) if so.
+ * 
+ * @param {string}   att        attribute to be used in function call
+ * @param {Function} ifValid    function to be executed on valid attributes. uses att as argument
+ * 
+ * @returns {boolean} returns true if att is a valid attribute, false if not
+ */
 const useResource = function(res, ifValid) {
     ifValid = ifValid || (() => {});
     res = res.toLowerCase().trim();
-
     // iterate over all attributes
     for (resource in Resources) {
         // iterate over all possible names for an attribute
         for (resName of (Resources[resource])) {
             if (res === resName) {
-                ifValid(resName);
+                ifValid(resource);
                 return true;
             }
         }
@@ -268,7 +275,6 @@ const command = function(cmd, user, char1) {
         (Attribute) => {
             let advBonus = getAdvBonus(cmd);
             let att = char[Attribute].base + char[Attribute].bonus
-            console.log("Attrb: "+ Attribute+". att: "+ att)
             retVal.msg += "**" + char.name + "**, rolando **" + Attribute + "**:\n";
             retVal.msg += rollAttribute(att + advBonus.bonus, advBonus.adv);
         }
@@ -479,6 +485,29 @@ const command = function(cmd, user, char1) {
             }
         }
     }
+    // if changing or checking a resource (e.g.: "!HP -10")
+    else if (useResource(command, (res) => {
+        // if adding/removing the resource
+        if (/(\+*|-*) *[0-9]+/.test(cmd)) {
+            let resChange = Number(/[0-9]+/.exec(cmd)[0])
+            if (/-/.test(cmd))
+                resChange *= -1
+
+            char[res].current += resChange
+
+            if (char[res].current > char[res].max)
+                char[res].current = char[res].max
+            
+            retVal.msg  = "**"+char.name+"**:\n"
+            retVal.msg += "\t"+res+":   "+char[res].current+" / "+char[res].max
+        }
+        // if just checking
+        else {
+            console.log("check")
+            retVal.msg  = "**"+char.name+"**:\n"
+            retVal.msg += "\t"+res+":   "+char[res].current+" / "+char[res].max
+        }
+    }));
     // if checking a character's bio (THIS SHOULD ALWAYS BE THE LAST COMMAND CHECKED, BECAUSE OF THE "isInArray(command, getCharNames(user))" PART)
     else if (isInArray(command, CommandWords.bio)) {
 
@@ -531,7 +560,10 @@ const command = function(cmd, user, char1) {
         return false;
     }
 
-    return retVal;
+    if (retVal.msg !== "")
+        return retVal
+    else 
+        return {msg: "programmer fucked up", attach: {}}
 }
 // exports.command = command
 
@@ -1070,6 +1102,8 @@ const Resources = {
     ],
     Stamina: [
         "stamina",
+        "stam",
+        "stm",
         "estamina"
     ]
 };
@@ -1143,7 +1177,7 @@ const charCreate = (user) => {
     }
     if (!user.hasOwnProperty("FB"))
         user.FB = {conversation: {name: "", stage: 0}}
-
+        
     // if already creating a character
     if (user.FB.conversation.name === "creating character") {
         retVal.msg = "Você já está no meio da criação de um personagem. Quer descartar esse personagem incompleto e criar outro?";
@@ -1208,13 +1242,9 @@ const getCharNames = (user) => {
 const getCharID = (name, user) => {
     let id = 0
     let regExp = new RegExp(name.trim(), "i");
-    // console.log("regExp: "+regExp)
-    for (char of user.FB.chars) {
-        // console.log("regExp: "+regExp)
-
+    for (char of user.FB.chars)
         if (regExp.test(char.name)) return id
         else id++
-    }
 
     return false
 }
