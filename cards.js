@@ -424,7 +424,7 @@ const suitEffects = {
         "-2 desvantagem no próximo ataque que você receber entre agora e o início do seu próximo turno"
     ],
     DIAMONDS: [
-        "Você pode trocar a sua Ação Menor e seu movimento por uma Ação Maior no seu próximo turno, ou ganhar uma Ação Menor adicional",
+        "Até o final do seu próximo turno, você pode trocar a sua Ação Menor e seu movimento por uma Ação Maior, ou ganhar uma Ação Menor adicional",
         "Escolha um inimigo. No próximo turno dele, ele não terá a sua Ação Maior"
     ],
     HEARTS: [
@@ -432,22 +432,22 @@ const suitEffects = {
         "Escolha um inimigo e um tipo de dano. Esse inimigo perde resistência a esse tipo de dano até o final do seu próximo turno. Se o inimigo não tiver resistência ao tipo de dano escolhido, ele tem fraqueza contra esse dano até o final do seu próximo turno"
     ],
     SPADES: [
-        "Seu próximo ataque causa dano máximo, mas não explode",
+        "O próximo ataque que você fizer ou Skill de dano ou cura que você usar nesse turno recebe +2 no Attributo relevante no Dano/Cura",
         "O próximo ataque inimigo que você receber até o seu próximo turno causa dano mínimo"
     ]
 };
 const symbEffects = {
-    A: "O próximo ataque que você fizer ou Skill de dano ou cura que você usar nesse turno recebe +2 no Attributo relevante no Dano/Cura",
+    A: "Seu próximo ataque ou Skill de dano/cura nesse turno causa dano máximo, mas não explode",
     2: "Você recupera toda a sua Stamina",
     3: "Você pode se mover o dobro da sua velocidade padrão nesse turno",
     4: "Você ganha Guard equivalente a seu Level +2 até o fim do seu próximo turno",
     5: "A próxima Skill que você usar não custa Mana nem Stamina",
-    6: "A sua próxima rolagem de atributo tem sucesso automático (a não ser que o mestre diga que não)",
+    6: "A sua próxima rolagem tem sucesso automático (a não ser que o mestre diga que não)",
     7: "Você ganha Dodge equivalente a seu Level até o fim do seu próximo turno",
     8: "Você recupera metade da sua Mana máxima",
     9: "Você recupera um quarto da sua Vida Máxima",
-    10: "A próxima rolagem de atributo contra você tem -1 desvantagem",
+   10: "O próximo ataque contra você tem -1 desvantagem",
     J: "Você ganha 1 Legend Point",
-    Q: "Role um 1d6. Se deu 6, compre outra carta!",
-    K: "Você pode ativar os dois efeitos a baixo em vez de um só"
+    Q: "Role um 1d4. Se deu 6, compre outra carta!",
+    K: "Você pode ativar os dois efeitos abaixo em vez de um só"
 };

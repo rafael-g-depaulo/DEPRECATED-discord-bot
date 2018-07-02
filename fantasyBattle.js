@@ -15,7 +15,7 @@ const path = require('path');
  * 
  * @returns returns the dice roll for the attribute
  */
-exports.rollAttribute = function (attribute, adv) {
+const rollAttribute = function (attribute, adv) {
     adv = adv || 0;
     let list = false;
     if (adv !== 0)
@@ -32,7 +32,7 @@ exports.rollAttribute = function (attribute, adv) {
         list, true, false);
 }
 
-exports.rollAttack = function (attribute, adv) {
+const rollAttack = function (attribute, adv) {
     adv = adv || 0;
     let list = false;
     if (adv !== 0)
@@ -49,7 +49,7 @@ exports.rollAttack = function (attribute, adv) {
         list, true, false);
 }
 
-exports.rollInitiative = function (agility, adv) {
+const rollInitiative = function (agility, adv) {
     adv = adv || 0;
     let list = false;
     if (adv !== 0)
@@ -66,7 +66,7 @@ exports.rollInitiative = function (agility, adv) {
         list, true, false);
 }
 
-exports.rollDamage = function (attribute, adv, superExp) {
+const rollDamage = function (attribute, adv, superExp) {
     adv = adv || 0;
     superExp = superExp || false;
     let list = false;
@@ -175,76 +175,56 @@ exports.rollDamage = function (attribute, adv, superExp) {
 }
 
 /**
- * @description checks if att is a valid attribute name, then calls func(att) if so.
+ * @description checks if cmdStr is a valid command, and executes it if yes.
  * 
- * @param {string} att          attribute to be used in function call
- * @param {Function} ifValid    function to be executed on valid attributes. uses att as argument
- * @param {Function} ifInvalid  function to be executed on invalid attributes. uses att as argument
+ * @param {string} cmdStr 
+ * @param {User}   user
  * 
- * @returns {Boolean} returns true if att is a valid attribute, false if not
+ * @return {{msg: string, attach: {}}|boolean} 
  */
-exports.useAttribute = function (att, ifValid, ifInvalid) {
-    ifValid = ifValid || (() => {});
-    ifInvalid = ifInvalid || (() => {});
-    att = att.toLowerCase().trim();
-
-    // iterate over all attributes
-    for (attb in Stats) {
-        // iterate over all possible names for an attribute
-        for (statName of (Stats[attb])) {
-            if (att === statName) {
-                ifValid(attb);
-                return true;
-            }
-        }
+exports.checkCommand = function(cmdStr, user) {
+    cmdStr = cmdStr.trim()
+    let retVal = {
+        msg: "",
+        attach: {}
     }
-    ifInvalid(att);
-    return false;
+
+    // check if has FB things
+    if (user.hasOwnProperty("FB")) {
+        // if is a command
+        if (cmdStr.trim().slice(0, 1) === "!") {
+            cmdStr = cmdStr.slice(1)
+            
+            // if creating character
+            if (isCharCreate(cmdStr.split(" ")[0]))
+                return charCreate(user)
+
+            // if using "!charName (command)"
+            else if (isInArray(cmdStr.split(' ')[0], getCharNames(user))) {
+                return command(cmdStr.slice(cmdStr.split(' ')[0].length).trim(), user, user.FB.chars[getCharID(cmdStr.split(' ')[0].replace('!',''), user)])
+            }
+                
+            // if using "!(command)"
+            else
+                return command(cmdStr, user)
+
+        }
+        
+        // else if in a conversation about FB
+        else if (user.FB.hasOwnProperty("conversation")) {
+            return conversation(cmdStr, user)
+        }
+        // else, return false
+        return false
+    }
+    // else, if creating a character
+    else if (isCharCreate(cmdStr.split(" ")[0])) return charCreate(user)
+    // else, go away.
+    else return false;
+
 }
 
-exports.getMaxHP = function(char) {
-    return (
-        10 +
-        2 * char.Fortitude +
-        2 * char.Presence + 
-        1 * char.Will + 
-        Math.floor(1.5 * char.Might) + 
-        2 * char.Level
-    );
-}
-
-exports.getMaxMP = function(char) {
-    let maxSuper = [
-        char.Alteration,
-        char.Creation,
-        char.Energy,
-        char.Entropy,
-        char.Influence,
-        char.Movement,
-        char.Prescience,
-        char.Protection
-    ].sort((a, b) => a-b)[0];
-
-    return (
-        10 +
-        3 * char.Learning +
-        2 * char.Will +
-        Math.ceil(1.5 * maxSuper) +
-        2 * char.Level
-    );
-}
-
-exports.getMaxStamina = function(char) {
-    return (
-        10 +
-        3 * char.Fortitude +
-        2 * char.Agility +
-        1 * char.Might +
-        1 * char.Level
-    );
-}
-
-exports.useResource = function(res, ifValid) {
+const useResource = function(res, ifValid) {
     ifValid = ifValid || (() => {});
     res = res.toLowerCase().trim();
 
@@ -264,83 +244,138 @@ exports.useResource = function(res, ifValid) {
 /**
  * @description tests if a string is a valid command for OL: FB. if yes, take care of it. if no, returns false.
  * 
- * @param {string} cmd          command string 
- * @param {Character} char      character 
+ * @param {string}        cmd   command string 
+ * @param {User}          user  user
+ * @param {Character|Any} char  character (optional)
  * 
- * @returns {{msg: string, char: Character, attach: {}}|boolean}    Either a string of the resolved command, or false if no valid command
+ * @returns {{msg: string, attach: {}}|boolean}    Either a string of the resolved command, or false if no valid command
  */
-exports.command = function(cmd, char) {
+const command = function(cmd, user, char1) {
 // setting up the return message, and first word of command
-    let msg = "";
+    let char = char1 || user.FB.chars[user.FB.activeCharId]
+    let retVal = {
+        msg: "",
+        attach: {}
+    }
     let command = cmd.trim().split(" ")[0].toLowerCase();
-    let arg1;
+    let arg1;       // a segunda palavra do argumento
     if (cmd.trim().split(" ").length > 1)
         arg1 = cmd.trim().split(" ")[1].toLowerCase();
-    let attach = {};
 
 // testing for commands
-    // if rolling "!attribute [advantage] [bonus]"
-    if (exports.useAttribute(command,
+    // if rolling "!attribute [(dis)advantage+x] [bonus]"
+    if (useAttribute(command,
         (Attribute) => {
             let advBonus = getAdvBonus(cmd);
-            msg += "**" + char.name + "**, rolando **" + Attribute + "**:\n";
-            msg += exports.rollAttribute(char[Attribute] + advBonus.bonus, advBonus.adv);
+            let att = char[Attribute].base + char[Attribute].bonus
+            console.log("Attrb: "+ Attribute+". att: "+ att)
+            retVal.msg += "**" + char.name + "**, rolando **" + Attribute + "**:\n";
+            retVal.msg += rollAttribute(att + advBonus.bonus, advBonus.adv);
         }
     ));
-    // if rolling "!initiative [advantage] [bonus]"
-    else if (command === "initiative" || command === "iniciative" ||
-             command === "iniciativa") {
+    // if rolling "!initiative [(dis)advantage+x] [bonus]"
+    else if (isInArray(command, CommandWords.iniciative)) {
         let advBonus = getAdvBonus(cmd);
-        msg += "Iniciativa para **" + char.name + "**:\n";
-        msg += exports.rollInitiative(char.Agility + advBonus.bonus, advBonus.adv);
+        let agi = char.Agility.base + char.Agility.bonus
+        retVal.msg += "Iniciativa para **" + char.name + "**:\n";
+        retVal.msg += rollInitiative(agi + advBonus.bonus, advBonus.adv);
     }
-    // if rolling "!damage [attribute] [advantage] [bonus]"
-    else if (command === "dmg"  || command === "damg" || command === "damag" ||
-             command === "dano" || command === "damage") {
+    // if rolling "!damage [attribute] [(dis)advantage+x] [bonus]"
+    else if (isInArray(command, CommandWords.damage)) {
         let attb = "";
         if (cmd.trim().split(" ").length > 1)
             attb = cmd.trim().split(" ")[1].toLowerCase();
-        exports.useAttribute(attb,
+        useAttribute(attb,
         // if there is an attribute, use it
             (Attribute) => {
                 let advBonus = getAdvBonus(cmd);
-                msg += "**" + char.name + "**, rolando dano para **" + Attribute + "**:\n";
-                msg += exports.rollDamage(char[Attribute] + advBonus.bonus, advBonus.adv);
+                let att = Attribute.base + Attribute.bonus
+                retVal.msg += "**" + char.name + "**, rolando dano para **" + Attribute + "**:\n";
+                retVal.msg += rollDamage(att + advBonus.bonus, advBonus.adv);
             },
         // if there isn't an attribute, use the character's attack attribute
             () => {
                 let advBonus = getAdvBonus(cmd);
-                msg += "**" + char.name + "**, rolando dano para **" + char.attackAttribute + "**:\n";
-                msg += exports.rollDamage(char[char.attackAttribute] + advBonus.bonus, advBonus.adv);
+                let att = attackAttribute.base + attackAttribute.bonus
+                retVal.msg += "**" + char.name + "**, rolando dano para **" + char.attackAttribute + "**:\n";
+                retVal.msg += rollDamage(att + advBonus.bonus, advBonus.adv);
             }
         );
     }
-    // if taking/restoring/checking HP, Mana or Stamina
-    else if (exports.useResource(command,
-        (resource) => {
-            // if there is damage/healing to add
-            while (/(\+|-) *[0-9]+/.test(cmd)) {
-                // if positive
-                if (/\+ *[0-9]+/.test(cmd))
-                    char[resource] += Number(/[0-9]+/.exec(cmd)[0]);
-                // if negative
-                if (/- *[0-9]+/.test(cmd))
-                    char[resource] -= Number(/[0-9]+/.exec(cmd)[0]);
+    // if rolling "!attack [attribute] [(dis)advantage+x] [bonus]"
+    else if (isInArray(command, CommandWords.attack)) {
 
-                cmd = cmd.slice(/(\+|-) *[0-9]+/.exec(cmd).index + /(\+|-) *[0-9]+/.exec(cmd)[0].length);
+        let attb = "";
+        if (cmd.trim().split(" ").length > 1)
+            attb = cmd.trim().split(" ")[1].toLowerCase();
+        useAttribute(attb,
+        // if there is an attribute, use it
+            (Attribute) => {
+                let advBonus = getAdvBonus(cmd);
+                let att = Attribute.base + Attribute.bonus
+                retVal.msg += "**" + char.name + "**, rolando ataque para **" + Attribute + "**:\n";
+                retVal.msg += rollAttack(att + advBonus.bonus, advBonus.adv);
+            },
+        // if there isn't an attribute, use the character's attack attribute
+            () => {
+                let advBonus = getAdvBonus(cmd);
+                let att = attackAttribute.base + attackAttribute.bonus
+                retVal.msg += "**" + char.name + "**, rolando ataque para **" + char.attackAttribute + "**:\n";
+                retVal.msg += rollAttack(att + advBonus.bonus, advBonus.adv);
             }
-
-            // if above max, restore to max
-            if (char[resource] > char[resource+"_max"])
-                char[resource] = char[resource+"_max"];
-
-            msg += "**" + resource.toUpperCase() + "**: " + char[resource] + "/" + char[resource+"_max"];
-
-            msg += "\n";
+        );
+    }
+    // if calculating damage "!damageCalc GUARD DODGE damage"
+    else if (isInArray(command, CommandWords.damageCalculation)) {
+        let guard = 0, dodge = 0, dmgIn = 0;
+        // if guard and dodge inserted
+        if (/(\+*|-*) *[0-9]+ +(\+*|-*) *[0-9]+ +[0-9]+/.test(cmd)) {
+            let buffStr = /(\+*|-*) *[0-9]+/.exec(cmd)[0]
+            cmd = cmd.slice(/(\+|-)* *[0-9]+/.exec(cmd).index + buffStr.length)
+            if (buffStr.search('-') !== -1)
+              guard = -1*Number(/[0-9]+/.exec(buffStr)[0])
+            else
+              guard =    Number(/[0-9]+/.exec(buffStr)[0])
+            
+            buffStr = /(\+*|-*) *[0-9]+/.exec(cmd)[0]
+            cmd = cmd.slice(/(\+*|-*) *[0-9]+/.exec(cmd).index + buffStr.length)
+            if (buffStr.search('-') !== -1)
+              dodge = -1*Number(/[0-9]+/.exec(buffStr)[0])
+            else
+              dodge =    Number(/[0-9]+/.exec(buffStr)[0])
+        
+            buffStr = /(\+*|-*) *[0-9]+/.exec(cmd)[0]
+            cmd = cmd.slice(/(\+*|-*) *[0-9]+/.exec(cmd).index + buffStr.length)
+            if (buffStr.search('-') !== -1)
+              dmgIn = -1*Number(/[0-9]+/.exec(buffStr)[0])
+            else
+              dmgIn =    Number(/[0-9]+/.exec(buffStr)[0])
         }
-    ));
+        // if damage inserted, but not guard or dodge
+        else if (/[0-9]+/.test(cmd)) {
+            dmgIn = /[0-9]+/.exec(cmd)[0]
+            guard = char.Guard.base + char.Guard.bonus
+            dodge = char.Dodge.base + char.Dodge.bonus
+            retVal.msg += "**"+char.name+"**:\n\n"
+        }
+        // if no damage inserted
+        else {
+            retVal.msg  = "Use o comando direito idiota. Os formatos aceitáveis são:\n\n"
+            retVal.msg += "\"!dmgCalc (GUARD) (DODGE) (dano)\"\n"
+            retVal.msg += "\"!dmgCalc (dano)\"  (isso vai usar o dodge e guard do seu personagem ativo)"
+
+            return retVal
+        }
+
+        let dmgOut = damageCalc(dmgIn, guard, dodge)
+        retVal.msg += "dano **antes** da mitigação: "+dmgIn+"\n"
+        retVal.msg += "(GUARD: "+guard+", DODGE: "+dodge+")\n\n"
+        retVal.msg += "dano reduzido: "+(dmgIn-dmgOut)+"\n"
+        retVal.msg += "dano tomado: "+dmgOut+"\n"
+    }
     // if drawing a card
-    else if (command === "draw" || command === "drawcard") {
+    else if (isInArray(command, CommandWords.draw)) {
+        let char = user.FB.chars[user.FB.activeCharId]
         let card = cards.draw();
         // if doesn't have a cards property, give it one
         if (!char.hasOwnProperty("cards"))
@@ -371,9 +406,8 @@ exports.command = function(cmd, char) {
         };
     }
     // if using a card
-    else if (command === "card" || command === "carta" || command === "usecard" || command === "usacarta"
-    || ( (command === "use" || command === "usa") && (arg1 === "card" || arg1 === "carta"))) {
-
+    else if (isInArray(command, CommandWords.card) || ( (command === "use" || command === "usa") && (arg1 === "card" || arg1 === "carta"))) {
+        let char = user.FB.chars[user.FB.activeCharId]
         // se o personagem não tem um card, retorne
         if (!char.hasOwnProperty("cards") || Object.keys(char.cards).length === 0) {
             msg = "Você não tem nenhum card. Seto Kaiba ficaria decepcionado.";
@@ -386,13 +420,14 @@ exports.command = function(cmd, char) {
 
                 // confirm effects
                 msg += "Você quer mesmo gastar ";
-                if (card.search("Q") !== -1)
+                if (card.search("Q") !== -1) 
                     msg += "a ";
                 else
                     msg += "o ";
                 msg += cards.getCardName(card) + "?";
 
-                char.conversation = "spendCardConfirm";
+                user.FB.conversation.name  = "spendCardConfirm";
+                user.FB.conversation.stage = 1;
                 char.cardSpending = card;
             }
             // se falou um card pelo nome
@@ -407,7 +442,8 @@ exports.command = function(cmd, char) {
                         msg += "o ";
                     msg += cards.getCardName(matchCards[0]) + "?";
                         
-                    char.conversation = "spendCardConfirm";
+                    user.FB.conversation.name  = "spendCardConfirm";
+                    user.FB.conversation.stage = 1;
                     char.cardSpending = matchCards[0];
                 }
                 // if multiple matches
@@ -419,7 +455,8 @@ exports.command = function(cmd, char) {
                             msg += " (x" + char.cards[matchCards[i]] + ")";
                     }
 
-                    char.conversation = "choseSpendCard";
+                    user.FB.conversation.name  = "choseSpendCard";
+                    user.FB.conversation.stage = 1;
                     char.cardChosing = matchCards;
                 }
             }
@@ -436,79 +473,332 @@ exports.command = function(cmd, char) {
                     }
                 }
 
-                char.conversation = "choseSpendCard";
+                user.FB.conversation.name  = "choseSpendCard";
+                user.FB.conversation.stage = 1;
                 char.cardChosing = charCards;
             }
         }
     }
-// if it wasn't a valid command, check if in a conversation with the bot regarding the character
+    // if checking a character's bio (THIS SHOULD ALWAYS BE THE LAST COMMAND CHECKED, BECAUSE OF THE "isInArray(command, getCharNames(user))" PART)
+    else if (isInArray(command, CommandWords.bio)) {
+
+        const getBonusStr = (bonus) => {
+            if (bonus < 0) return " ("+bonus+")"
+            if (bonus > 0) return " (+"+bonus+")"
+            else return ""
+        }
+
+        let msg = "";
+
+        msg += "**"+char.name+"**\n\n"
+        msg += "HP:   **"+char.HP.current       +" / "+char.HP.max + "**\n"
+        msg += "MP:   **"+char.MP.current       +" / "+char.MP.max + "**\n"
+        msg += "MP:   **"+char.Stamina.current  +" / "+char.Stamina.max + "**\n\n"
+
+        msg += "**GUARD**: "+char.Guard.base + getBonusStr(char.Guard.bonus) + "\n"
+        msg += "**DODGE**: "+char.Dodge.base + getBonusStr(char.Dodge.bonus) + "\n\n"
+
+        msg += "**Physical**:\n"
+        msg += "\tAgility: "    + char.Agility.base     + getBonusStr(char.Agility.bonus)     + "\n"
+        msg += "\tFortitude: "  + char.Fortitude.base   + getBonusStr(char.Fortitude.bonus)   + "\n"
+        msg += "\tMight: "      + char.Might.base       + getBonusStr(char.Might.bonus)       + "\n\n"
+        
+        msg += "**Mental**:\n"
+        msg += "\tLearning: "   + char.Learning.base    + getBonusStr(char.Learning.bonus)   + "\n"
+        msg += "\tLogic: "      + char.Logic.base       + getBonusStr(char.Logic.bonus)      + "\n"
+        msg += "\tPerception: " + char.Perception.base  + getBonusStr(char.Perception.bonus) + "\n"
+        msg += "\tWill: "       + char.Will.base        + getBonusStr(char.Will.bonus)       + "\n\n"
+
+        msg += "**Social**:\n"
+        msg += "\tDeception: "  + char.Deception.base   + getBonusStr(char.Deception.bonus)  + "\n"
+        msg += "\tPersuasion: " + char.Persuasion.base  + getBonusStr(char.Persuasion.bonus) + "\n"
+        msg += "\tPresence: "   + char.Presence.base    + getBonusStr(char.Presence.bonus)   + "\n\n"
+
+        msg += "**Extraordinary**:\n"
+        msg += "\tAlteration: " + char.Alteration.base  + getBonusStr(char.Alteration.bonus) + "\n"
+        msg += "\tCreation: "   + char.Creation.base    + getBonusStr(char.Creation.bonus)   + "\n"
+        msg += "\tEnergy: "     + char.Energy.base      + getBonusStr(char.Energy.bonus)     + "\n"
+        msg += "\tEntropy: "    + char.Entropy.base     + getBonusStr(char.Entropy.bonus)    + "\n"
+        msg += "\tInfluence: "  + char.Influence.base   + getBonusStr(char.Influence.bonus)  + "\n"
+        msg += "\tMovement: "   + char.Movement.base    + getBonusStr(char.Movement.bonus)   + "\n"
+        msg += "\tPrescience: " + char.Prescience.base  + getBonusStr(char.Prescience.bonus) + "\n"
+        msg += "\tProtection: " + char.Protection.base  + getBonusStr(char.Protection.bonus) + "\n"
+
+        retVal.msg = msg
+    }
     // else, return false
     else {
         return false;
     }
 
-    return {
-        msg: msg,
-        char: char,
-        attach: attach
-    };
+    return retVal;
 }
+// exports.command = command
 
-exports.conversation = function(cmd, char) {
-    let msg = "";
-    let attach = {};
+const conversation = function(cmd, user) {
+    let retVal = {
+        msg: "",
+        attach: {}
+    }
 
+    // creating char
+    if (user.FB.conversation.name === "creating character") {
+        let char = user.FB.chars[user.FB.chars.length-1]
+
+        switch (user.FB.conversation.stage) {
+            // recieving the character's name
+            case 1:
+
+                char.name = cmd.trim()
+                retVal.msg = "Então o nome do seu personagem é \""+cmd.trim()+"\"?"
+                user.FB.conversation.stage++
+                user.FB.conversation.stage = 2
+                break;
+            // confirming the character's name
+            case 2:
+                // if yes
+                if (isYes(cmd)) {
+                    retVal.msg = "E quanto "+ char.name +" tem de HP máximo?"
+                    user.FB.conversation.stage++
+                    break;
+                }
+                // if no
+                else {
+                    retVal.msg = "Então qual é a porra do nome?"
+                    user.FB.conversation.stage = 1
+                    break;
+                }
+            // getting max HP, MP and Stamina
+            case 3:
+            case 4:
+            case 5:
+                // set up resource names
+                let resourceName, nextResource;
+                     if (user.FB.conversation.stage === 3) { resourceName = "HP"; nextResource = "MP"       }
+                else if (user.FB.conversation.stage === 4) { resourceName = "MP"; nextResource = "Stamina"  }
+                else if (user.FB.conversation.stage === 5) { resourceName = "Stamina"; nextResource = false }
+                // if NaN entered
+                if (isNaN(Number(cmd.trim()))) {
+                    retVal.msg = "\"" + cmd.trim() + "\" não é um número. Quanto de "+ resourceName +" máximo seu personagem tem?"
+                }
+                // if number entered
+                else {
+                    let char = user.FB.chars[user.FB.chars.length-1]
+                    char[resourceName] = {
+                        max:     Number(cmd.trim()),
+                        current: Number(cmd.trim())
+                    }
+                    
+                    if (nextResource)
+                        retVal.msg = Number(cmd.trim()) +" de "+ resourceName +". Quanto de "+ nextResource +" máximo seu personagem tem?"
+                    else
+                        retVal.msg = "Ok! E quanto "+ char.name +" tem de Agility?"
+
+                    user.FB.conversation.stage++
+                }
+                break;
+            // get the Attributes
+            case  6: case  7: case  8: case  9: case 10: case 11: case 12: case 13: case 14: case 15:
+            case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+                // set up resource names
+                let attributeName = "", nextAtt = ""
+                let attID = user.FB.conversation.stage
+                     if (attID ===  6) { attributeName = "Agility"    ; nextAtt = "Fortitude"   }
+                else if (attID ===  7) { attributeName = "Fortitude"  ; nextAtt = "Might"       }
+                else if (attID ===  8) { attributeName = "Might"      ; nextAtt = "Learning"    }
+                else if (attID ===  9) { attributeName = "Learning"   ; nextAtt = "Logic"       }
+                else if (attID === 10) { attributeName = "Logic"      ; nextAtt = "Perception"  }
+                else if (attID === 11) { attributeName = "Perception" ; nextAtt = "Will"        }
+                else if (attID === 12) { attributeName = "Will"       ; nextAtt = "Deception"   }
+                else if (attID === 13) { attributeName = "Deception"  ; nextAtt = "Persuasion"  }
+                else if (attID === 14) { attributeName = "Persuasion" ; nextAtt = "Presence"    }
+                else if (attID === 15) { attributeName = "Presence"   ; nextAtt = "Alteration"  }
+                else if (attID === 16) { attributeName = "Alteration" ; nextAtt = "Creation"    }
+                else if (attID === 17) { attributeName = "Creation"   ; nextAtt = "Energy"      }
+                else if (attID === 18) { attributeName = "Energy"     ; nextAtt = "Entropy"     }
+                else if (attID === 19) { attributeName = "Entropy"    ; nextAtt = "Influence"   }
+                else if (attID === 20) { attributeName = "Influence"  ; nextAtt = "Movement"    }
+                else if (attID === 21) { attributeName = "Movement"   ; nextAtt = "Prescience"  }
+                else if (attID === 22) { attributeName = "Prescience" ; nextAtt = "Protection"  }
+                else if (attID === 23) { attributeName = "Protection" ; nextAtt = false         }
+
+                // if NaN entered
+                if (isNaN(Number(cmd.trim()))) {
+                    retVal.msg = "\"" + cmd.trim() + "\" não é um número. Quanto "+char.name+" tem de "+ attributeName +"?"
+                }
+                // if number entered 
+                else {
+                    if (nextAtt)
+                        retVal.msg = ""+ Number(cmd.trim()) +" de "+ attributeName +". Quanto de "+ nextAtt +" máximo seu personagem tem?"
+                    else
+                        retVal.msg = "Ok! terminamos os atributos. E qual atributo "+ char.name +" usa pra atacar?"
+                    
+                    user.FB.conversation.stage++
+                    char[attributeName] = {
+                        base: Number(cmd.trim()),
+                        bonus: 0
+                    }
+                }
+                break;
+                
+            // recieving the attack attribute
+            case 24:
+                useAttribute(cmd, 
+                    (attr) => {
+                        let att = firstLetter2Upper(attr)
+                        retVal.msg  = "Ok, então o atributo que "+char.name+" usa pra atacar é "+ att
+                        retVal.msg += ". E qual é o atributo do dado de HP do seu personagem?"
+                        retVal.msg += " (pergunte pro mestre o que isso significa se você não sabe)"
+                        char.attackAttribute = att
+                        user.FB.conversation.stage++
+                    },
+                    (command) => {
+                        retVal.msg = "\""+ command + "\" não é um atributo válido. aprenda a escrever"
+                    }
+                )
+                break;
+
+            // recieving the HP and MP dice Attribute
+            case 25:
+            case 26:
+                var curResource = "", nxtResource;
+                if (user.FB.conversation.stage === 25) {
+                    curResource = "HP"; nxtResource = "MP"
+                } else {
+                    curResource = "MP"; nxtResource = false
+                }
+                useAttribute(cmd, 
+                    (attr) => {
+                        let att = firstLetter2Upper(attr)
+                        retVal.msg  = "Ok, então o atributo que "+char.name+" usa para seu dado de "+curResource+" é "+ att + "."
+                        char[""+curResource+"dice"] = att
+                        if (nxtResource) {
+                            retVal.msg += " E qual é o atributo do dado de "+nxtResource+" do seu personagem?"
+                            retVal.msg += " (pergunte pro mestre o que isso significa se você não sabe)"
+                        } else {
+                            retVal.msg += " E quanto "+ char.name +" tem de Guard?"
+                        }
+                        user.FB.conversation.stage++
+                    },
+                    (command) => {
+                        retVal.msg = "\""+ command + "\" não é um atributo válido. aprenda a escrever"
+                    }
+                )
+                break;
+
+            // recieving character's guard
+            case 27:
+                // if NaN entered
+                if (isNaN(Number(cmd.trim()))) {
+                    retVal.msg = "\"" + cmd.trim() + "\" não é um número. Quanto "+char.name+" tem de Guard?"
+                }
+                // if number entered 
+                else {
+                    retVal.msg = ""+ Number(cmd.trim()) +" de Dodge. Quanto de Dodge seu personagem tem?"
+                    char.Guard = {
+                        base: Number(cmd.trim()),
+                        bonus: 0
+                    }
+                    user.FB.conversation.stage++
+                }
+                break;
+
+            // recieving character's dodge
+            case 28:
+                // if NaN entered
+                if (isNaN(Number(cmd.trim()))) {
+                    retVal.msg = "\"" + cmd.trim() + "\" não é um número. Quanto "+char.name+" tem de Dodge?"
+                }
+                // if number entered 
+                else {
+                    retVal.msg = ""+ Number(cmd.trim()) +" de Dodge. Criação de personagem completa!"
+                    char.Dodge = {
+                        base: Number(cmd.trim()),
+                        bonus: 0
+                    }
+                    // ENDING CONVERSATION ////////////////////////////////////////////////////////////////////
+                        user.FB.conversation.name  = ""
+                        user.FB.conversation.stage = 0
+                        user.FB.activeCharId = user.FB.chars.length-1
+                    // ENDING CONVERSATION ////////////////////////////////////////////////////////////////////
+                }
+                break;
+
+            default:
+                retVal.msg = "estágio de conversa de criação de personagem inválido. o Ragan fez merda no código"
+                break;
+        }
+    }
+    // overriding char creation
+    else if (/character creation override/.test(user.FB.conversation.name)) {
+        let charStage = Number(/[0-9]+/.exec(user.FB.conversation.name)[0])
+        
+        // if yes
+        if (isYes(cmd)) {
+            retVal.msg = "Okay. Reiniciando cração de personagem. Qual o nome do seu personagem?"
+            user.FB.conversation.stage = 1
+            user.FB.conversation.name = "creating character"
+        }
+        // if no
+        else {
+            retVal.msg = "Okay, seu indeciso de merda.\n\nDigite algo para continuar a criação de personagem pausada..."
+            user.FB.conversation.stage = charStage
+            user.FB.conversation.name = "creating character"
+        }
+    }
     // chosing card to spend
-    if (char.conversation === "choseSpendCard") {
+    else if (user.FB.conversation.name === "choseSpendCard") {
+        let char = user.FB.chars[user.FB.activeCharId]
         let card = cards.namesCard(cmd, char.cardChosing);
         // if valid card was mentioned
         if (card.length >= 1) {
             card = card[0];
             char.cardSpending = card;
-            char.conversation = "spendCardConfirm";
+            char.FB.conversation = "spendCardConfirm";
 
-            msg += "Tem certeza que quer usar ";
+            retVal.msg += "Tem certeza que quer usar ";
             if (card.search("Q") !== -1)
-                msg += "a ";
+                retVal.msg += "a ";
             else
-                msg += "o ";
-            msg += cards.getCardName(card) + "?";
+                retVal.msg += "o ";
+            retVal.msg += cards.getCardName(card) + "?";
         }
         // if called it by number
         else if (!Number.isNaN(cmd.trim()) && Number(cmd.trim()) > 0 && Number(cmd.trim()) <= char.cardChosing.length) {
             card = char.cardChosing[Number(cmd.trim())-1];
             char.cardSpending = card;
-            char.conversation = "spendCardConfirm";
+            user.FB.conversation.name  = "spendCardConfirm";
+            user.FB.conversation.stage = 1;
 
-            msg += "Tem certeza que quer usar ";
+            retVal.msg += "Tem certeza que quer usar ";
             if (card.search("Q") !== -1)
-                msg += "a ";
+                retVal.msg += "a ";
             else
-                msg += "o ";
-            msg += cards.getCardName(card) + "?";
+                retVal.msg += "o ";
+            retVal.msg += cards.getCardName(card) + "?";
         }
         // if no valid card was mentioned
         else {
-            msg += "Opção inválida! Idiota.";
-            delete char.conversation;
-            delete char.cardChosing;
+            retVal.msg += "Opção inválida! Idiota.";
+            user.FB.conversation = {name: "", stage: 0};
         }
     }
     // confirming card to spend
-    else if (char.conversation === "spendCardConfirm") {
+    else if (user.FB.conversation.name === "spendCardConfirm") {
+        let char = user.FB.chars[user.FB.activeCharId]
         let command = cmd.trim().split(" ")[0].toLowerCase().trim();
         if (command === "yes" || command === "y" || command === "sim" || command === "s") {
-            msg += cards.getCardName(char.cardSpending) + " usad";
+            retVal.msg += cards.getCardName(char.cardSpending) + " usad";
             if (char.cardSpending.search("Q") !== -1)
-                msg += "a. ";
+                retVal.msg += "a. ";
             else
-                msg += "o. ";
+                retVal.msg += "o. ";
             if (char.cardSpending.search("JOKER") !== -1)
-                msg += char.name + " ganha o seguinte efeito:\n\n";
+                retVal.msg += char.name + " ganha o seguinte efeito:\n\n";
             else
-                msg += char.name + " ganha os seguintes efeitos:\n\n";
+                retVal.msg += char.name + " ganha os seguintes efeitos:\n\n";
             
-            msg += cards.getCardEffects(char.cardSpending);
+            retVal.msg += cards.getCardEffects(char.cardSpending);
 
             char.cards[char.cardSpending]--;
             if (char.cards[char.cardSpending] === 0)
@@ -519,44 +809,40 @@ exports.conversation = function(cmd, char) {
             delete char.cardSpending;
         }
         else if (command === "nao" || command === "não" || command === "no" || command === "n") {
-            msg += "Ok! então a carta não será usada.";
-            delete char.conversation;
+            retVal.msg += "Ok! então a carta não será usada.";
             delete char.cardSpending;
+            user.FB.conversation = {name: "", stage: 0}
         }
         else {
-            msg += "Eu não entendi. aprende a escrever, oh idiota.";
+            retVal.msg += "Eu não entendi. aprende a escrever, oh idiota.";
         }
     }
 
     // if (msg === "")
-    //     delete char.conversation;
+    //     delete user.FB.conversation;
 
-    return {
-        msg: msg,
-        char: char,
-        attach: attach
-    };
+    return retVal;
 }
 
 const getAdvBonus = function(cmd) {
     // try to get advantage (oh god why am i doing this)
     let advantageWords = Dice.getAdvWords().adv,
         disadvantageWords = Dice.getAdvWords().dis;
-    let advRegStr = "(\\++|-+)? *[0-9]* *(";
+    let advRegStr = "(";
     for (i in advantageWords) {
         if (i != 0)
             advRegStr += "|";
         advRegStr += advantageWords[i];
     }
-    advRegStr += ")";
+    advRegStr += ") *(\\++|-+)? *[0-9]*";
     let advRegExp = new RegExp(advRegStr, "i");
-    let disRegStr = "(\\++|-+)? *[0-9]* *(";
+    let disRegStr = "(";
     for (i in disadvantageWords) {
         if (i != 0)
             disRegStr += "|";
             disRegStr += disadvantageWords[i];
     }
-    disRegStr += ")";
+    disRegStr += ") *(\\++|-+)? *[0-9]*";
     let disRegExp = new RegExp(disRegStr, "i");
 
     let adv = 0;
@@ -598,7 +884,7 @@ const getAdvBonus = function(cmd) {
     return {
         adv: adv,
         bonus: bonus
-    };
+    }
 }
 
 // exports.getAdvBonus = getAdvBonus;   // dunno why this is here. if ever needed, de-comment it
@@ -787,40 +1073,210 @@ const Resources = {
         "estamina"
     ]
 };
+
+const CommandWords = {
+    damage: [
+        "dmg",
+        "damg",
+        "damag",
+        "dano",
+        "damage"
+    ],
+    iniciative: [
+        "initiative",
+        "iniciative",
+        "iniciativa",
+        "init"
+    ], 
+    draw: [
+        "draw",
+        "drawcard"
+    ],
+    card: [
+        "card",
+        "carta",
+        "usecard",
+        "usacard",
+        "usecarta",
+        "usacarta"
+    ],
+    bio: [
+        "bio",
+        "sheet",
+        "ficha"
+    ],
+    attack: [
+        "ataque",
+        "attack",
+        "atk",
+        "attaque",
+        "ataq",
+        "attk",
+        "atake",
+        "atq"
+    ],
+    damageCalculation: [
+        "dmgcalc",
+        "calc",
+        "calculo",
+        "dmgcalculo",
+        "calculodano",
+        "calculodedano",
+        "calcdano",
+        "danocalc",
+        "danocalculo"
+    ]
+}
 // setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// stupid helper functions ------------------------------------------------------------------------------------------------------
+const isYes = (str) => {
+    return (/y/i.test(str) || /s/i.test(str) || /yes/i.test(str) || /sim/i.test(str) || /uhum/i.test(str) || /aham/i.test(str) || /yep/i.test(str))
+}
+const isCharCreate = (str) => { 
+    return (/(createchar|charcreate)/i.test(str.split(" ")[0]) || (/create/i.test(str.split(" ")[0]) && /create/i.test(str.split(" ")[1])));
+}
+const charCreate = (user) => {
+    const retVal = {
+        msg: "",
+        attach: {}
+    }
+    if (!user.hasOwnProperty("FB"))
+        user.FB = {conversation: {name: "", stage: 0}}
+
+    // if already creating a character
+    if (user.FB.conversation.name === "creating character") {
+        retVal.msg = "Você já está no meio da criação de um personagem. Quer descartar esse personagem incompleto e criar outro?";
+        user.FB.conversation.name = "character creation override? "+user.FB.conversation.stage;
+        user.FB.conversation.stage = 0;
+        
+    }
+    // else, start character creation process
+    else {
+        user.FB.conversation.name = "creating character"
+        user.FB.conversation.stage = 1
+        
+        if (!user.FB.hasOwnProperty("chars"))
+            user.FB.chars = []
+        user.FB.chars.push({})
+
+        retVal.msg = "Qual o nome do seu personagem?"
+    }
+    return retVal
+}
+const firstLetter2Upper = (str) => {
+    return (str[0].toUpperCase() + str.slice(1).toLowerCase())
+}
+
+/**
+ * @description calculate damage mitigation
+ * 
+ * @param {number} dmgIn 
+ * @param {number} guard 
+ * @param {number} dodge 
+ */
+const damageCalc = (dmgIn, guard, dodge) => {
+    guard = guard || 0
+    dodge = dodge || 0
+    if (dodge < 0) dodge = 0
+    return Math.floor(dmgIn*(15/(dodge+15)) - guard)
+}
+
+/**
+ * @description returns the names of all of the @param user's characters' names
+ * 
+ * @param {User} user
+ * 
+ * @returns {string[]} 
+ */
+const getCharNames = (user) => {
+    let retVal = []
+    for (char of user.FB.chars) {
+        retVal.push(char.name.trim().toLowerCase())
+    }
+    return retVal
+}
+
+/**
+ * @description returns the id of a character
+ * 
+ * @param {string}  name
+ * @param {User}    user
+ * 
+ * @returns {number|boolean} the char's id, or false if not found
+ */
+const getCharID = (name, user) => {
+    let id = 0
+    let regExp = new RegExp(name.trim(), "i");
+    // console.log("regExp: "+regExp)
+    for (char of user.FB.chars) {
+        // console.log("regExp: "+regExp)
+
+        if (regExp.test(char.name)) return id
+        else id++
+    }
+
+    return false
+}
+
+/**
+ * @description checks if @param _str is equal to one of the elements in @param arr
+ * 
+ * @param {string} _str 
+ * @param {string[]} arr
+ * 
+ * @returns {boolean} 
+ */
+const isInArray = (str, arr) => {
+    let regExp = new RegExp(str.trim(), "i");
+    for (s of arr)
+        if (regExp.test(s))
+            return s
+
+    return false
+}
+
+/**
+ * @description checks if att is a valid attribute name, then calls func(att) if so.
+ * 
+ * @param {string}   att        attribute to be used in function call
+ * @param {Function} ifValid    function to be executed on valid attributes. uses att as argument
+ * @param {Function} ifInvalid  function to be executed on invalid attributes. uses att as argument
+ * 
+ * @returns {boolean} returns true if att is a valid attribute, false if not
+ */
+const useAttribute = function (att, ifValid, ifInvalid) {
+    ifValid = ifValid || (() => {});
+    ifInvalid = ifInvalid || (() => {});
+    att = att.toLowerCase().trim();
+
+    // iterate over all attributes
+    for (attb in Stats) {
+        // iterate over all possible names for an attribute
+        for (statName of (Stats[attb])) {
+            if (att === statName) {
+                ifValid(attb);
+                return true;
+            }
+        }
+    }
+    ifInvalid(att);
+    return false;
+}
+// stupid helper functions ------------------------------------------------------------------------------------------------------
+
+/**
+ * @typedef Attribute
+ * 
+ * @property {number} base
+ * @property {number} bonus
+ */
 
 /**
  * @typedef Resource
  * 
- * @property {number} Base       base/bonus of the resource
- * @property {number} Level      how much resource the character gains based on their level
- * 
- * @property {number} HighPhys   multiplier of character's Highest Physical Attribute on resource's formula
- * @property {number} HighMental multiplier of character's Highest Mental Attribute on resource's formula
- * @property {number} HighSocial multiplier of character's Highest Social Attribute on resource's formula
- * @property {number} HighSuper  multiplier of character's Highest Supernatural Attribute on resource's formula
- * 
- * @property {number} Agility    multiplier of character's Agility on resource's formula
- * @property {number} Fortitude  multiplier of character's fortitude on resource's formula
- * @property {number} Might      multiplier of character's Might on resource's formula
- * 
- * @property {number} Learning   multiplier of character's Learning on resource's formula
- * @property {number} Logic      multiplier of character's Logic on resource's formula
- * @property {number} Perception multiplier of character's Perception on resource's formula
- * @property {number} Will       multiplier of character's Will on resource's formula
- * 
- * @property {number} Deception  multiplier of character's Deception on resource's formula
- * @property {number} Persuasion multiplier of character's Persuasion on resource's formula
- * @property {number} Presence   multiplier of character's Presence on resource's formula
- * 
- * @property {number} Alteration multiplier of character's Alteration on resource's formula
- * @property {number} Creation   multiplier of character's Creation on resource's formula
- * @property {number} Energy     multiplier of character's Energy on resource's formula
- * @property {number} Entropy    multiplier of character's Entropy on resource's formula
- * @property {number} Influence  multiplier of character's Influence on resource's formula
- * @property {number} Movement   multiplier of character's Movement on resource's formula
- * @property {number} Prescience multiplier of character's Prescience on resource's formula
- * @property {number} Protection multiplier of character's Protection on resource's formula
+ * @property {number} max
+ * @property {number} current
  */
 
 /**
@@ -832,25 +1288,39 @@ const Resources = {
  * 
  * @property {number} Level
  * 
- * @property {number} Agility    
- * @property {number} Fortitude  
- * @property {number} Might      
+ * @property {Attribute} Agility    
+ * @property {Attribute} Fortitude  
+ * @property {Attribute} Might      
  * 
- * @property {number} Learning   
- * @property {number} Logic      
- * @property {number} Perception 
- * @property {number} Will       
+ * @property {Attribute} Learning   
+ * @property {Attribute} Logic      
+ * @property {Attribute} Perception 
+ * @property {Attribute} Will       
  * 
- * @property {number} Deception  
- * @property {number} Persuasion 
- * @property {number} Presence   
+ * @property {Attribute} Deception  
+ * @property {Attribute} Persuasion 
+ * @property {Attribute} Presence   
  * 
- * @property {number} Alteration 
- * @property {number} Creation   
- * @property {number} Energy     
- * @property {number} Entropy    
- * @property {number} Influence  
- * @property {number} Movement   
- * @property {number} Prescience 
- * @property {number} Protection
+ * @property {Attribute} Alteration 
+ * @property {Attribute} Creation   
+ * @property {Attribute} Energy     
+ * @property {Attribute} Entropy    
+ * @property {Attribute} Influence  
+ * @property {Attribute} Movement   
+ * @property {Attribute} Prescience 
+ * @property {Attribute} Protection
  */
+
+ /**
+  * @typedef User
+  * 
+  * @property {FB} FB
+  */
+
+ /**
+  * @typedef FB
+  * 
+  * @property {Character[]} chars
+  * @property {number}      activeCharId
+  * @property {name: string, stage: number} conversation
+  */

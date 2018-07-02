@@ -70,10 +70,39 @@ const dice = {
   explode: false,
   superExplode: false
 }
+const a = /(\+*|-*) *[0-9]+ +(\+*|-*) *[0-9]+ +[0-9]+/, b = /[0-9]+ +[0-9]+ +[0-9]+/;
+let command = "!damageCalc14 +++ 2     445"
+let guard = 0, dodge = 0, dmgIn = 0;
+// if guard and dodge inserted
+if (a.test(command)) {
+    let buffStr = /(\+*|-*) *[0-9]+/.exec(command)[0]
+    command = command.slice(/(\+|-)* *[0-9]+/.exec(command).index + buffStr.length)
+    if (buffStr.search('-') !== -1)
+      guard = -1*Number(/[0-9]+/.exec(buffStr)[0])
+    else
+      guard =    Number(/[0-9]+/.exec(buffStr)[0])
+    
+    buffStr = /(\+*|-*) *[0-9]+/.exec(command)[0]
+    command = command.slice(/(\+*|-*) *[0-9]+/.exec(command).index + buffStr.length)
+    if (buffStr.search('-') !== -1)
+      dodge = -1*Number(/[0-9]+/.exec(buffStr)[0])
+    else
+      dodge =    Number(/[0-9]+/.exec(buffStr)[0])
 
-console.log("STR: "+Dice.rollDie(dice).resultSum)
-console.log("DEX: "+Dice.rollDie(dice).resultSum)
-console.log("CON: "+Dice.rollDie(dice).resultSum)
-console.log("INT: "+Dice.rollDie(dice).resultSum)
-console.log("WIS: "+Dice.rollDie(dice).resultSum)
-console.log("CAR: "+Dice.rollDie(dice).resultSum)
+    buffStr = /(\+*|-*) *[0-9]+/.exec(command)[0]
+    command = command.slice(/(\+*|-*) *[0-9]+/.exec(command).index + buffStr.length)
+    if (buffStr.search('-') !== -1)
+      dmgIn = -1*Number(/[0-9]+/.exec(buffStr)[0])
+    else
+      dmgIn =    Number(/[0-9]+/.exec(buffStr)[0])
+}
+// console.log(guard)
+// console.log(dodge)
+// console.log(dmgIn)
+console.log(/greg/i.test("Greg"))
+// console.log("STR: "+Dice.rollDie(dice).resultSum)
+// console.log("DEX: "+Dice.rollDie(dice).resultSum)
+// console.log("CON: "+Dice.rollDie(dice).resultSum)
+// console.log("INT: "+Dice.rollDie(dice).resultSum)
+// console.log("WIS: "+Dice.rollDie(dice).resultSum)
+// console.log("CAR: "+Dice.rollDie(dice).resultSum)

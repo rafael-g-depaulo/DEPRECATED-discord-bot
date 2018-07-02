@@ -57,6 +57,12 @@ const disadvantageWords = [
     "desv",
     "des",
 ]
+
+const sumWords = [
+    "sum",
+    "soma",
+    "some"
+]
 /**** constants *****************************************************************/ 
 
 /**
@@ -560,4 +566,50 @@ exports.getAdvWords = function() {
         adv: advantageWords,
         dis: disadvantageWords
     };
+}
+
+
+/**
+ * @description checks if cmdStr is a valid command, and executes it if yes.
+ * 
+ * @param {string} cmdStr 
+ * 
+ * @return {{msg: string, attach: {}}|boolean} 
+ */
+exports.checkCommand = (cmdStr) => {
+    let retVal = {
+        msg: "",
+        attach: {}
+    }
+    if (cmdStr.length <= 0 || cmdStr[0] !== '!')
+        return false
+
+    cmdShrt = cmdStr.split(' ')[0].trim()
+
+    if (isInArray(cmdShrt, rollCmdWords))
+        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr.slice(cmdShrt.length).trim()), true, true, false)
+    else if (isInArray(cmdShrt, sumWords))
+        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr.slice(cmdShrt.length).trim()), true, true, true)
+
+    if (retVal.msg !== "")
+        return retVal
+    
+    return false
+}
+
+/**
+ * @description checks if @param _str is equal to one of the elements in @param arr
+ * 
+ * @param {string} _str 
+ * @param {string[]} arr
+ * 
+ * @returns {boolean} 
+ */
+const isInArray = (str, arr) => {
+    let regExp = new RegExp(str.trim(), "i");
+    for (s of arr)
+        if (regExp.test(s))
+            return s
+
+    return false
 }
