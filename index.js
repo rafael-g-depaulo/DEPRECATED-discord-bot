@@ -57,6 +57,38 @@ bot.on('message', (message) => {
     /********************* INSERT NEXT MODULE HERE ***********************/
 
 // if it wasn't a command specific of a module, test if regular command
+    if (!commandResult) commandResult = (() => {
+        if (cmd[0] === "!" && /help/i.test(cmd.split(' ')[0])) {
+            let msg = ""
+
+            msg += "Os comandos que existem são:\n\n"
+            msg += "\t\"!createChar\"\n\t\t-> Para criar um novo personagem"                                                 + "\n\n"
+            msg += "\t\"!(atributo) [(des)vantagem+x] [bonus]\"\n\t\t-> Para fazer uma rolagem de atributo"                  + "\n\n"
+            msg += "\t\"!iniciativa [(des)vantagem+x] [bonus]\"\n\t\t-> Para rolar iniciativa"                               + "\n\n"
+            msg += "\t\"!dano (atributo) [(dis)advantage+x] [bonus]\"\n\t\t-> Para rolar dano"                               + "\n\n"
+            msg += "\t\"!attack [attributo] [(dis)advantage+x] [bonus]\"\n\t\t-> Para rolar um ataque"                       + "\n\n"
+            msg += "\t\"!damageCalc (GUARD) (DODGE) (danoTomado)\"\n\t\t-> Para calcular dano"                               + "\n\n"
+            msg += "\t\"!damageCalc (danoTomado)\"\n\t\t-> Para calcular dano (usa o Guard e Dodge do seu personagem ativo)" + "\n\n"
+            msg += "\t\"!draw\"\n\t\t-> Para comprar uma carta"                                                              + "\n\n"
+            msg += "\t\"!card [nome da carta]\"\n\t\t-> Para usar uma carta"                                                 + "\n\n"
+            msg += "\t\"!HP/MP/Stamina (+/-)x\"\n\t\t-> Para aumentar/diminuir seu HP/MP/Stamina atual"                      + "\n\n"
+            msg += "\t\"!bonus (Atributo) (+/-)x\"\n\t\t-> Para aumentar/diminuir seu bonus em um attributo"                 + "\n\n"
+            msg += "\t\"!bonus (GUARD/DODGE) (+/-)x\"\n\t\t-> Para aumentar/diminuir seu bonus em Guard ou Dodge"            + "\n\n"
+            msg += "\t\"!setMax HP/MP/Stamina x\"\n\t\t-> Para mudar seu HP/MP/Stamina máximo"                               + "\n\n"
+            msg += "\t\"!set (Atributo) x\"\n\t\t-> Para mudar o valor base de um atributo"                                  + "\n\n"
+            msg += "\t\"!set Guard/Dodge x\"\n\t\t-> Para mudar o seu valor base em Guard ou Dodge"                          + "\n\n"
+            msg += "\t\"!bio\"\n\t\t-> Para checar HP/MP/Atributos/etc. do seu personagem ativo"                             + "\n\n"
+
+            msg += ""
+
+            return {
+                msg: msg,
+                attach: {}
+            }
+        } else {
+            return false
+        }
+    })()
 
 // if there is something to send, send it
     if (commandResult) {

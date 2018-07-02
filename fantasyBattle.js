@@ -199,6 +199,48 @@ exports.checkCommand = function(cmdStr, user) {
             if (isCharCreate(cmdStr.split(" ")[0]))
                 return charCreate(user)
 
+            
+            // if changing default character "!changeChar [charname]"
+            else if (isInArray(cmdStr.split(' ')[0], CommandWords.changeChar)) {
+                // if mentioned char name
+                if (cmdStr.split(' ').length > 1 && isInArray(cmdStr.split(' ')[1], getCharNames(user))) {
+                    let oldCharID = user.FB.activeCharId
+                    user.FB.activeCharId = getCharID(cmdStr.split(' ')[1], user)
+
+                    if (oldCharID === user.FB.activeCharId)
+                        return {
+                            msg: (user.FB.chars[oldCharID].name + " já é o personagem ativo!"),
+                            attach: {}
+                        }
+                    else
+                        return {
+                            msg: ("Personagem ativo mudado, de **"+user.FB.chars[oldCharID].name + "** para **" + user.FB.chars[user.FB.activeCharId].name + "**"),
+                            attach: {}
+                        }
+                    
+                }
+                // if not
+                else {
+                    const listChars = (chars) => {
+                        let str = ""
+                        for (i in chars)
+                            str += "\t" + (1+Number(i)) + ". " + chars[i].name + "\n"
+
+                        return (str + "\n")
+                    }
+
+                    user.FB.conversation = {
+                        name: "changing character",
+                        stage: 1
+                    }
+
+                    return {
+                        msg: "E qual dos seus personagens você quer colocar como ativo?   ( ͡° ͜ʖ ͡°)\n\n"+listChars(user.FB.chars),
+                        attach: {}
+                    }
+                }
+            }
+
             // if using "!charName (command)"
             else if (isInArray(cmdStr.split(' ')[0], getCharNames(user))) {
                 // this one takes care of "!charName" (displays bio)
@@ -506,41 +548,133 @@ const command = function(cmd, user, char1) {
         }
         // if just checking
         else {
-            console.log("check")
             retVal.msg  = "**"+char.name+"**:\n"
             retVal.msg += "\t"+res+":   "+char[res].current+" / "+char[res].max
         }
     }));
     // if changing an Attribute's bonus "!bonus (Attribute) +/-x"
-    else if (isInArray(command, CommandWords.bonus)) {
-        if (cmd.split(' ').length < 3 || !/[0-9]+/.test(cmd)) {
-            retVal.msg += "Aprenda a usar o comando. o formato certo é \"!bonus \'Atributo\' [+/-]x\""
-        }
-        else useAttribute(cmd.split(' ')[1],
-            (att) => {
-                // if increasing bonus
-                if (/\+/.test(cmd))
-                    char[att].bonus += Number(/[0-9]+/.exec(cmd)[0])
-                // if decreasing bonus
-                else if (/-/.test(cmd))
-                    char[att].bonus -= Number(/[0-9]+/.exec(cmd)[0])
-                // if setting bonus to a fixed value
-                else
-                    char[att].bonus = Number(/[0-9]+/.exec(cmd)[0])
-                
-                retVal.msg += "**" + char.name + "**:\n"
-                retVal.msg += att + ": " + char[att].base
-                if (char[att].bonus >= 0)
-                    retVal.msg += " (+" + char[att].bonus + ")"
-                else
-                    retVal.msg += " (-" + char[att].bonus + ")"
-
-            },
-            () => {
+    else if (isInArray(command, CommandWords.bonus) && useAttribute(cmd.split(' ')[1], 
+        (att) => {
+            if (cmd.split(' ').length < 3 || !/[0-9]+/.test(cmd)) {
                 retVal.msg += "Aprenda a usar o comando. o formato certo é \"!bonus \'Atributo\' [+/-]x\""
+                return
             }
-        )
+
+            // if increasing bonus
+            if (/\+/.test(cmd))
+                char[att].bonus += Number(/[0-9]+/.exec(cmd)[0])
+            // if decreasing bonus
+            else if (/-/.test(cmd))
+                char[att].bonus -= Number(/[0-9]+/.exec(cmd)[0])
+            // if setting bonus to a fixed value
+            else
+                char[att].bonus = Number(/[0-9]+/.exec(cmd)[0])
+            
+            retVal.msg += "**" + char.name + "**:\n"
+            retVal.msg += att + ": " + char[att].base
+            if (char[att].bonus >= 0)
+                retVal.msg += " (+" + char[att].bonus + ")"
+            else
+                retVal.msg += " (" + char[att].bonus + ")"
+
+        },
+        () => {
+        }
+    ));
+    // if changing a defense's bonus "!bonus (defense) +/- x"
+    else if (isInArray(command, CommandWords.bonus) && useDefense(cmd.split(' ')[1],
+        (def) => {
+            if (cmd.split(' ').length < 3 || !/[0-9]+/.test(cmd)) {
+                retVal.msg += "Aprenda a usar o comando. o formato certo é \"!bonus Guard/Dodge [+/-]x\""
+                return
+            }
+
+            // if increasing bonus
+            if (/\+/.test(cmd))
+                char[def].bonus += Number(/[0-9]+/.exec(cmd)[0])
+            // if decreasing bonus
+            else if (/-/.test(cmd))
+                char[def].bonus -= Number(/[0-9]+/.exec(cmd)[0])
+            // if setting bonus to a fixed value
+            else
+                char[def].bonus = Number(/[0-9]+/.exec(cmd)[0])
+            
+            retVal.msg += "**" + char.name + "**:\n"
+            retVal.msg += def + ": " + char[def].base
+            if (char[def].bonus >= 0)
+                retVal.msg += " (+" + char[def].bonus + ")"
+            else
+                retVal.msg += " (" + char[def].bonus + ")"
+
+        },
+        () => {
+        }
+    ));
+    // if changing a Resource's maximum value "!setMax (Resource) x"
+    else if (isInArray(command, CommandWords.setMax) && useResource(cmd.split(' ')[1], 
+    (res) => {
+        if (cmd.split(' ').length < 3 || !/[0-9]+/.test(cmd)) {
+            retVal.msg += "Aprenda a usar o comando. o formato certo é \"!setMax \'HP/MP/Stamina\' x\""
+            return
+        }
+        
+        char[res].current = char[res].max = Number(/[0-9]+/.exec(cmd)[0])
+        
+        retVal.msg += "**" + char.name + "**:\n"
+        retVal.msg += res + ": " + char[res].current + " / " + char[res].max
+
+    },
+    () => {
     }
+    ));
+    // if changing an Attribute's base value "!set (Attribute) x"
+    else if (isInArray(command, CommandWords.set) && useAttribute(cmd.split(' ')[1], 
+    (att) => {
+        if (cmd.split(' ').length < 3 || !/[0-9]+/.test(cmd)) {
+            retVal.msg += "Aprenda a usar o comando. o formato certo é \"!set \'Atributo\' x\""
+            return
+        }
+        
+        if (/-/.test(cmd))
+            char[att].base = -1 * Number(/[0-9]+/.exec(cmd)[0])
+        else
+            char[att].base = Number(/[0-9]+/.exec(cmd)[0])
+        
+        retVal.msg += "**" + char.name + "**:\n"
+        retVal.msg += att + ": " + char[att].base
+        if (char[att].bonus >= 0)
+            retVal.msg += " (+" + char[att].bonus + ")"
+        else
+            retVal.msg += " (" + char[att].bonus + ")"
+
+    },
+    () => {
+    }
+    ));
+    // if changing a Defense's base value "!set (Defense) x"
+    else if (isInArray(command, CommandWords.set) && useDefense(cmd.split(' ')[1], 
+    (def) => {
+        if (cmd.split(' ').length < 3 || !/[0-9]+/.test(cmd)) {
+            retVal.msg += "Aprenda a usar o comando. o formato certo é \"!set \'Atributo\' x\""
+            return
+        }
+        
+        if (/-/.test(cmd))
+            char[def].base = -1 * Number(/[0-9]+/.exec(cmd)[0])
+        else
+            char[def].base = Number(/[0-9]+/.exec(cmd)[0])
+        
+        retVal.msg += "**" + char.name + "**:\n"
+        retVal.msg += def + ": " + char[def].base
+        if (char[def].bonus >= 0)
+            retVal.msg += " (+" + char[def].bonus + ")"
+        else
+            retVal.msg += " (" + char[def].bonus + ")"
+
+    },
+    () => {
+    }
+    ));
     // if checking a character's bio (THIS SHOULD ALWAYS BE THE LAST COMMAND CHECKED, BECAUSE OF THE "isInArray(command, getCharNames(user))" PART)
     else if (isInArray(command, CommandWords.bio)) {
 
@@ -882,6 +1016,42 @@ const conversation = function(cmd, user) {
             retVal.msg += "Eu não entendi. aprende a escrever, oh idiota.";
         }
     }
+    // chosing active character
+    else if (user.FB.conversation.name === "changing character") {
+        // console.log("getCharNames(user): ")
+        // console.log(getCharNames(user))
+        // if used a number
+        if (/[0-9]+/.test(cmd)) {
+            let oldCharID = user.FB.activeCharId
+            user.FB.activeCharId = Number(/[0-9]+/.exec(cmd)[0])-1
+
+            if (oldCharID === user.FB.activeCharId)
+                retVal.msg = user.FB.chars[oldCharID].name + " já é o personagem ativo!"
+            else if (user.FB.activeCharId >= user.FB.chars.length) {
+                user.FB.activeCharId = oldCharID
+                retVal.msg = "Número inválido!"
+            }
+            else
+                retVal.msg = "Personagem ativo mudado, de **"+user.FB.chars[oldCharID].name + "** para **" + user.FB.chars[user.FB.activeCharId].name + "**"
+        }
+        // if used the name
+        else if (isInArray(cmd.split(' ')[0], getCharNames(user))) {
+            let oldCharID = user.FB.activeCharId
+            user.FB.activeCharId = getCharID(cmd.split(' ')[0], user)
+
+            if (oldCharID === user.FB.activeCharId)
+                retVal.msg = user.FB.chars[oldCharID].name + " já é o personagem ativo!"
+            else
+                retVal.msg = "Personagem ativo mudado, de **"+user.FB.chars[oldCharID].name + "** para **" + user.FB.chars[user.FB.activeCharId].name + "**"
+        }
+        // if invalid
+        else {
+            retVal.msg = "Resposta inválida. Aprenda a escrever, idiota."
+        }
+        
+        user.FB.conversation.name  = ""
+        user.FB.conversation.stage = 0
+    }
 
     // if (msg === "")
     //     delete user.FB.conversation;
@@ -1115,6 +1285,16 @@ const Stats = {
     ]
 };
 
+const Defenses = {
+    Dodge: [
+        "dodge"
+    ],
+    Guard: [
+        "guard",
+        "guarda"
+    ]
+}
+
 const Resources = {
     HP: [
         "hp",
@@ -1196,6 +1376,22 @@ const CommandWords = {
     bonus: [
         "bonus",
         "bônus"
+    ],
+    set: [
+        "set",
+        "seta",
+        "setbase"
+    ],
+    setMax: [
+        "setmax"
+    ],
+    changeChar: [
+        "changechar",
+        "changechars",
+        "changedefaultchar",
+        "changedefaultchars",
+        "changecharacter",
+        "changecharacters"
     ]
 }
 // setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1298,6 +1494,7 @@ const isInArray = (str, arr) => {
     if (str === "") return false
 
     let regExp = new RegExp(str.trim(), "i");
+
     for (s of arr)
         if (regExp.test(s))
             return s
@@ -1330,6 +1527,34 @@ const useAttribute = function (att, ifValid, ifInvalid) {
         }
     }
     ifInvalid(att);
+    return false;
+}
+
+/**
+ * @description checks if att is a valid defense (Guard, Dodge) name, then calls func(att) if so.
+ * 
+ * @param {string}   def        attribute to be used in function call
+ * @param {Function} ifValid    function to be executed on valid attributes. uses att as argument
+ * @param {Function} ifInvalid  function to be executed on invalid attributes. uses att as argument
+ * 
+ * @returns {boolean} returns true if att is a valid attribute, false if not
+ */
+const useDefense = function (def, ifValid, ifInvalid) {
+    ifValid = ifValid || (() => {});
+    ifInvalid = ifInvalid || (() => {});
+    def = def.toLowerCase().trim();
+
+    // iterate over all attributes
+    for (defense in Defenses) {
+        // iterate over all possible names for an attribute
+        for (defenseName of (Defenses[defense])) {
+            if (def === defenseName) {
+                ifValid(defense);
+                return true;
+            }
+        }
+    }
+    ifInvalid(def);
     return false;
 }
 // stupid helper functions ------------------------------------------------------------------------------------------------------
