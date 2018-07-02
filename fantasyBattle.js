@@ -201,7 +201,9 @@ exports.checkCommand = function(cmdStr, user) {
 
             // if using "!charName (command)"
             else if (isInArray(cmdStr.split(' ')[0], getCharNames(user))) {
-                return command(cmdStr.slice(cmdStr.split(' ')[0].length).trim(), user, user.FB.chars[getCharID(cmdStr.split(' ')[0].replace('!',''), user)])
+                // this one takes care of "!charName" (displays bio)
+                if (cmdStr.slice(cmdStr.split(' ')[0].length).trim() === "") return command("bio", user, user.FB.chars[getCharID(cmdStr.split(' ')[0].replace('!',''), user)])
+                else return command(cmdStr.slice(cmdStr.split(' ')[0].length).trim(), user, user.FB.chars[getCharID(cmdStr.split(' ')[0].replace('!',''), user)])
             }
                 
             // if using "!(command)"
@@ -285,6 +287,7 @@ const command = function(cmd, user, char1) {
         let agi = char.Agility.base + char.Agility.bonus
         retVal.msg += "Iniciativa para **" + char.name + "**:\n";
         retVal.msg += rollInitiative(agi + advBonus.bonus, advBonus.adv);
+        retVal.msg += "\n\n |"+command+"|"
     }
     // if rolling "!damage [attribute] [(dis)advantage+x] [bonus]"
     else if (isInArray(command, CommandWords.damage)) {
@@ -508,6 +511,36 @@ const command = function(cmd, user, char1) {
             retVal.msg += "\t"+res+":   "+char[res].current+" / "+char[res].max
         }
     }));
+    // if changing an Attribute's bonus "!bonus (Attribute) +/-x"
+    else if (isInArray(command, CommandWords.bonus)) {
+        if (cmd.split(' ').length < 3 || !/[0-9]+/.test(cmd)) {
+            retVal.msg += "Aprenda a usar o comando. o formato certo é \"!bonus \'Atributo\' [+/-]x\""
+        }
+        else useAttribute(cmd.split(' ')[1],
+            (att) => {
+                // if increasing bonus
+                if (/\+/.test(cmd))
+                    char[att].bonus += Number(/[0-9]+/.exec(cmd)[0])
+                // if decreasing bonus
+                else if (/-/.test(cmd))
+                    char[att].bonus -= Number(/[0-9]+/.exec(cmd)[0])
+                // if setting bonus to a fixed value
+                else
+                    char[att].bonus = Number(/[0-9]+/.exec(cmd)[0])
+                
+                retVal.msg += "**" + char.name + "**:\n"
+                retVal.msg += att + ": " + char[att].base
+                if (char[att].bonus >= 0)
+                    retVal.msg += " (+" + char[att].bonus + ")"
+                else
+                    retVal.msg += " (-" + char[att].bonus + ")"
+
+            },
+            () => {
+                retVal.msg += "Aprenda a usar o comando. o formato certo é \"!bonus \'Atributo\' [+/-]x\""
+            }
+        )
+    }
     // if checking a character's bio (THIS SHOULD ALWAYS BE THE LAST COMMAND CHECKED, BECAUSE OF THE "isInArray(command, getCharNames(user))" PART)
     else if (isInArray(command, CommandWords.bio)) {
 
@@ -1159,6 +1192,10 @@ const CommandWords = {
         "calcdano",
         "danocalc",
         "danocalculo"
+    ],
+    bonus: [
+        "bonus",
+        "bônus"
     ]
 }
 // setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1258,6 +1295,8 @@ const getCharID = (name, user) => {
  * @returns {boolean} 
  */
 const isInArray = (str, arr) => {
+    if (str === "") return false
+
     let regExp = new RegExp(str.trim(), "i");
     for (s of arr)
         if (regExp.test(s))
