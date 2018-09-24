@@ -1,0 +1,4 @@
+*.json
+*.bat
+node_modules/
+botKey
