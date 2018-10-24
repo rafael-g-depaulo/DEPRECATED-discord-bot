@@ -74,102 +74,11 @@ const rollDamage = function (attribute, adv, superExp) {
         list = true;
 
     // set up dice to roll
-    let dice = {};
+    let dice = getDice(attribute);
     dice.diceAdv = adv;
     dice.diceBonus = 0;
     dice.explode = true;
     dice.superExplode = superExp;
-
-    switch (attribute) {
-        case 0:
-            dice.diceQnt = 1;
-            dice.diceMax = 2;
-            break;
-        case 1:
-            dice.diceQnt = 1;
-            dice.diceMax = 4;
-            break;
-        case 2:
-            dice.diceQnt = 1;
-            dice.diceMax = 6;
-            break;
-        case 3:
-            dice.diceQnt = 1;
-            dice.diceMax = 8;
-            break;
-        case 4:
-            dice.diceQnt = 1;
-            dice.diceMax = 10;
-            break;
-        case 5:
-            dice.diceQnt = 2;
-            dice.diceMax = 6;
-            break;
-        case 6:
-            dice.diceQnt = 2;
-            dice.diceMax = 8;
-            break;
-        case 7:
-            dice.diceQnt = 2;
-            dice.diceMax = 10;
-            break;
-        case 8:
-            dice.diceQnt = 3;
-            dice.diceMax = 8;
-            break;
-        case 9:
-            dice.diceQnt = 3;
-            dice.diceMax = 10;
-            break;
-        case 10:
-            dice.diceQnt = 4;
-            dice.diceMax = 10;
-            break;
-        case 11:
-            dice.diceQnt = 8;
-            dice.diceMax = 4;
-            break;
-        case 12:
-            dice.diceQnt = 5;
-            dice.diceMax = 8;
-            break;
-        case 13:
-            dice.diceQnt = 10;
-            dice.diceMax = 4;
-            break;
-        case 14:
-            dice.diceQnt = 8;
-            dice.diceMax = 6;
-            break;
-        case 15:
-            dice.diceQnt = 3;
-            dice.diceMax = 20;
-            break;
-        case 16:
-            dice.diceQnt = 10;
-            dice.diceMax = 6;
-            break;
-        case 17:
-            dice.diceQnt = 6;
-            dice.diceMax = 12;
-            break;
-        case 18:
-            dice.diceQnt = 8;
-            dice.diceMax = 10;
-            break;
-        case 19:
-            dice.diceQnt = 11;
-            dice.diceMax = 8;
-            break;
-        case 20:
-            dice.diceQnt = 10;
-            dice.diceMax = 10;
-            break;
-        default:
-            dice.diceQnt = 1;
-            dice.diceMax = 2;
-            break;
-    }
 
     return Dice.rollDice([dice], list, true, false);
 }
@@ -186,7 +95,8 @@ exports.checkCommand = function(cmdStr, user) {
     cmdStr = cmdStr.trim()
     let retVal = {
         msg: "",
-        attach: {}
+        attach: {},
+        sendDirect: false
     }
 
     // check if has FB things
@@ -306,8 +216,10 @@ const command = function(cmd, user, char1) {
     let char = char1 || user.FB.chars[user.FB.activeCharId]
     let retVal = {
         msg: "",
-        attach: {}
+        attach: {},
+        sendDirect: false
     }
+
     let command = cmd.trim().split(" ")[0].toLowerCase();
     let arg1;       // a segunda palavra do argumento
     if (cmd.trim().split(" ").length > 1)
@@ -316,7 +228,7 @@ const command = function(cmd, user, char1) {
 // testing for commands
     // if rolling "!attribute [(dis)advantage+x] [bonus]"
     if (useAttribute(command,
-        (Attribute) => {
+        (Attribute) => { 
             let advBonus = getAdvBonus(cmd);
             let att = char[Attribute].base + char[Attribute].bonus
             retVal.msg += "**" + char.name + "**, rolando **" + Attribute + "**:\n";
@@ -329,7 +241,6 @@ const command = function(cmd, user, char1) {
         let agi = char.Agility.base + char.Agility.bonus
         retVal.msg += "Iniciativa para **" + char.name + "**:\n";
         retVal.msg += rollInitiative(agi + advBonus.bonus, advBonus.adv);
-        retVal.msg += "\n\n |"+command+"|"
     }
     // if rolling "!damage [attribute] [(dis)advantage+x] [bonus]"
     else if (isInArray(command, CommandWords.damage)) {
@@ -340,14 +251,14 @@ const command = function(cmd, user, char1) {
         // if there is an attribute, use it
             (Attribute) => {
                 let advBonus = getAdvBonus(cmd);
-                let att = Attribute.base + Attribute.bonus
+                let att = char[Attribute].base + char[Attribute].bonus;
                 retVal.msg += "**" + char.name + "**, rolando dano para **" + Attribute + "**:\n";
                 retVal.msg += rollDamage(att + advBonus.bonus, advBonus.adv);
             },
         // if there isn't an attribute, use the character's attack attribute
             () => {
                 let advBonus = getAdvBonus(cmd);
-                let att = attackAttribute.base + attackAttribute.bonus
+                let att = char[char.attackAttribute].base + char[char.attackAttribute].bonus
                 retVal.msg += "**" + char.name + "**, rolando dano para **" + char.attackAttribute + "**:\n";
                 retVal.msg += rollDamage(att + advBonus.bonus, advBonus.adv);
             }
@@ -370,7 +281,7 @@ const command = function(cmd, user, char1) {
         // if there isn't an attribute, use the character's attack attribute
             () => {
                 let advBonus = getAdvBonus(cmd);
-                let att = attackAttribute.base + attackAttribute.bonus
+                let att = char.attackAttribute.base + char.attackAttribute.bonus
                 retVal.msg += "**" + char.name + "**, rolando ataque para **" + char.attackAttribute + "**:\n";
                 retVal.msg += rollAttack(att + advBonus.bonus, advBonus.adv);
             }
@@ -577,8 +488,6 @@ const command = function(cmd, user, char1) {
             else
                 retVal.msg += " (" + char[att].bonus + ")"
 
-        },
-        () => {
         }
     ));
     // if changing a defense's bonus "!bonus (defense) +/- x"
@@ -606,8 +515,6 @@ const command = function(cmd, user, char1) {
             else
                 retVal.msg += " (" + char[def].bonus + ")"
 
-        },
-        () => {
         }
     ));
     // if changing a Resource's maximum value "!setMax (Resource) x"
@@ -675,6 +582,91 @@ const command = function(cmd, user, char1) {
     () => {
     }
     ));
+    // if having a short rest "!shortrest"
+    else if (isInArray(command, CommandWords.shortRest)) {
+        let HPattb = char.HPdice, MPattb = char.MPdice;
+        let oldMP = char.MP.current, oldStam = char.Stamina.current;
+        let HPdice = Dice.rollDie(getDice(char[HPattb].base + char[HPattb].bonus));
+        let MPdice = Dice.rollDie(getDice(char[MPattb].base + char[MPattb].bonus));
+
+        char.MP.current      += Math.floor(0.25 * MPdice.resultSum)
+        char.Stamina.current += Math.floor(1.50 * HPdice.resultSum)
+
+        if (char.MP.current > char.MP.max)
+            char.MP.current = char.MP.max
+        if (char.HP.current > char.HP.max)
+            char.HP.current = char.HP.max
+        if (char.Stamina.current > char.Stamina.max)
+            char.Stamina.current = char.Stamina.max
+        
+        retVal.msg += "MP: " + MPdice.sum + "\n\n";
+
+        retVal.msg += "**"+char.name+"**:\n"
+        retVal.msg += "\tHP:        "+char.HP.current+" / "+char.HP.max + "\t\t(recuperou 0)\n"
+        retVal.msg += "\tMP:        "+char.MP.current+" / "+char.MP.max + "\t\t(recuperou "+ (char.MP.current - oldMP) + ")\n"
+        retVal.msg += "\tStamina: "+char.Stamina.current+" / "+char.Stamina.max + "\t(recuperou "+ (char.Stamina.current - oldStam) + ")"
+    }
+    // if having a long rest "!longrest"
+    else if (isInArray(command, CommandWords.longRest)) {
+        let HPattb = char.HPdice, MPattb = char.MPdice;
+        let oldHP = char.HP.current, oldMP = char.MP.current, oldStam = char.Stamina.current;
+
+        let HPdice = Dice.rollDie(getDice(char[HPattb].base + char[HPattb].bonus));
+        let MPdice = Dice.rollDie(getDice(char[MPattb].base + char[MPattb].bonus));
+
+        let HPbaseGain = Math.floor(0.20 * char.HP.max)
+        let MPbaseGain = Math.floor(0.25 * char.MP.max)
+
+        let HPdiceGain = Math.floor(1.0* HPdice.resultSum)
+        let MPdiceGain = Math.floor(1.5* MPdice.resultSum)
+
+        char.HP.current      += HPbaseGain + HPdiceGain
+        char.MP.current      += MPbaseGain + MPdiceGain
+        char.Stamina.current  = char.Stamina.max
+        //  + 1,5 * Dice.rollDie(getDice(char[MPattb].base + char[MPattb].bonus)).resultSum
+
+        if (char.MP.current > char.MP.max)
+            char.MP.current = char.MP.max
+        if (char.HP.current > char.HP.max)
+            char.HP.current = char.HP.max
+
+            retVal.msg += "HP: " + HPdice.sum + "\n" + "MP: " + MPdice.sum + "\n\n";
+        
+            retVal.msg += "**"+char.name+"**:\n"
+            retVal.msg += "\tHP:        "+char.HP.current+" / "+char.HP.max + "\t\t(recuperou "+ HPbaseGain +" + "+ HPdiceGain + ")\n"
+            retVal.msg += "\tMP:        "+char.MP.current+" / "+char.MP.max + "\t\t(recuperou "+ MPbaseGain +" + "+ MPdiceGain  + ")\n"
+            retVal.msg += "\tStamina: "+char.Stamina.current+" / "+char.Stamina.max + "\t(recuperou "+ (char.Stamina.current - oldStam) + ")"
+    }
+    // if taking damage "!takedmg (num)"
+    else if (isInArray(command, CommandWords.takedmg)) {
+
+        // if theres no damage number, return
+        if (!/[0-9]+/.test(cmd)) {
+            retVal.msg = "Quantidade de dano tomado necessária! comando rejeitado";
+        }
+        else {
+
+            let guard = char.Guard.base + char.Guard.bonus,
+                dodge = char.Dodge.base + char.Dodge.bonus; // character's guard and dodge
+            let dmgIn  = Number(/[0-9]+/.exec(cmd)[0]);     // damage taken PRE mitigation
+            let dmgOut = damageCalc(dmgIn, guard, dodge);   // damage mitigated
+            if (dmgOut > dmgIn) dmgOut = dmgIn;             // make sure char cant mitigate more damage then recieved
+
+            // deal damage
+            char.HP.current -= (dmgIn-dmgOut);
+
+            // message user in discord
+            retVal.msg += "dano **antes** da mitigação: " + dmgIn   + "\n"
+            retVal.msg += "(GUARD: " + guard + ", DODGE: " + dodge  + ")\n\n"
+            retVal.msg += "dano reduzido: " + (dmgIn-dmgOut)        + "\n"
+            retVal.msg += "dano tomado: " + dmgOut                  + "\n\n"
+
+            retVal.msg += "**" + char.name + "**\n"
+            retVal.msg += "HP:   **" + char.HP.current + " / "+char.HP.max + "**\n"
+
+        }
+
+    }
     // if checking a character's bio (THIS SHOULD ALWAYS BE THE LAST COMMAND CHECKED, BECAUSE OF THE "isInArray(command, getCharNames(user))" PART)
     else if (isInArray(command, CommandWords.bio)) {
 
@@ -689,7 +681,7 @@ const command = function(cmd, user, char1) {
         msg += "**"+char.name+"**\n\n"
         msg += "HP:   **"+char.HP.current       +" / "+char.HP.max + "**\n"
         msg += "MP:   **"+char.MP.current       +" / "+char.MP.max + "**\n"
-        msg += "MP:   **"+char.Stamina.current  +" / "+char.Stamina.max + "**\n\n"
+        msg += "Stamina:   **"+char.Stamina.current  +" / "+char.Stamina.max + "**\n\n"
 
         msg += "**GUARD**: "+char.Guard.base + getBonusStr(char.Guard.bonus) + "\n"
         msg += "**DODGE**: "+char.Dodge.base + getBonusStr(char.Dodge.bonus) + "\n\n"
@@ -737,7 +729,8 @@ const command = function(cmd, user, char1) {
 const conversation = function(cmd, user) {
     let retVal = {
         msg: "",
-        attach: {}
+        attach: {},
+        sendDirect: true
     }
 
     // creating char
@@ -1053,10 +1046,10 @@ const conversation = function(cmd, user) {
         user.FB.conversation.stage = 0
     }
 
-    // if (msg === "")
-    //     delete user.FB.conversation;
-
-    return retVal;
+    if (retVal.msg === "")
+        return false;
+    else
+        return retVal;
 }
 
 const getAdvBonus = function(cmd) {
@@ -1075,7 +1068,7 @@ const getAdvBonus = function(cmd) {
     for (i in disadvantageWords) {
         if (i != 0)
             disRegStr += "|";
-            disRegStr += disadvantageWords[i];
+        disRegStr += disadvantageWords[i];
     }
     disRegStr += ") *(\\++|-+)? *[0-9]*";
     let disRegExp = new RegExp(disRegStr, "i");
@@ -1176,6 +1169,7 @@ const Stats = {
         "perc",
         "perce",
         "percep",
+        "percept",
         "perception",
         "percepcao",
         "percepçao",
@@ -1392,6 +1386,58 @@ const CommandWords = {
         "changedefaultchars",
         "changecharacter",
         "changecharacters"
+    ],
+    shortRest: [
+        "shortrest",
+        "srest",
+        "short"
+    ],
+    longRest: [
+        "longrest",
+        "lrest",
+        "long"
+    ],
+    takedmg: [
+        "takedmg",
+        "takedamg",
+        "takedmag",
+        "takedmge",
+        "takedamag",
+        "takedmage",
+        "takedamge",
+        "takedamage",
+        "tkdmg",
+        "tkdamg",
+        "tkdmag",
+        "tkdmge",
+        "tkdamag",
+        "tkdmage",
+        "tkdamge",
+        "tkdamage",
+        
+        "dmgtake",
+        "damgtake",
+        "dmagtake",
+        "dmgetake",
+        "damagtake",
+        "dmagetake",
+        "damgetake",
+        "damagetake",
+        "dmgtk",
+        "damgtk",
+        "dmagtk",
+        "dmgetk",
+        "damagtk",
+        "dmagetk",
+        "damgetk",
+        "damagetk",
+
+        "tomadano",
+        "tomadmg",
+        "tomadamage",
+        "tomardano",
+        "tomardmg",
+        "tomardamage",
     ]
 }
 // setting up constants /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1557,6 +1603,116 @@ const useDefense = function (def, ifValid, ifInvalid) {
     ifInvalid(def);
     return false;
 }
+
+/**
+ * 
+ * @param {number} attScore score for the attribute
+ * 
+ * @returns {Roll} dice to roll
+ */
+const getDice = (attScore) => {
+    let retVal = {
+        diceQnt: 0,
+        diceMax: 0,
+        diceAdv: 0,
+        diceBonus: 0,
+        explode: true,
+        superExplode: false
+    }
+
+    switch (attScore) {
+        case 0:
+            retVal.diceQnt = 1;
+            retVal.diceMax = 2;
+            break;
+        case 1:
+            retVal.diceQnt = 1;
+            retVal.diceMax = 4;
+            break;
+        case 2:
+            retVal.diceQnt = 1;
+            retVal.diceMax = 6;
+            break;
+        case 3:
+            retVal.diceQnt = 1;
+            retVal.diceMax = 8;
+            break;
+        case 4:
+            retVal.diceQnt = 1;
+            retVal.diceMax = 10;
+            break;
+        case 5:
+            retVal.diceQnt = 2;
+            retVal.diceMax = 6;
+            break;
+        case 6:
+            retVal.diceQnt = 2;
+            retVal.diceMax = 8;
+            break;
+        case 7:
+            retVal.diceQnt = 2;
+            retVal.diceMax = 10;
+            break;
+        case 8:
+            retVal.diceQnt = 3;
+            retVal.diceMax = 8;
+            break;
+        case 9:
+            retVal.diceQnt = 3;
+            retVal.diceMax = 10;
+            break;
+        case 10:
+            retVal.diceQnt = 4;
+            retVal.diceMax = 10;
+            break;
+        case 11:
+            retVal.diceQnt = 8;
+            retVal.diceMax = 4;
+            break;
+        case 12:
+            retVal.diceQnt = 5;
+            retVal.diceMax = 8;
+            break;
+        case 13:
+            retVal.diceQnt = 10;
+            retVal.diceMax = 4;
+            break;
+        case 14:
+            retVal.diceQnt = 8;
+            retVal.diceMax = 6;
+            break;
+        case 15:
+            retVal.diceQnt = 3;
+            retVal.diceMax = 20;
+            break;
+        case 16:
+            retVal.diceQnt = 10;
+            retVal.diceMax = 6;
+            break;
+        case 17:
+            retVal.diceQnt = 6;
+            retVal.diceMax = 12;
+            break;
+        case 18:
+            retVal.diceQnt = 8;
+            retVal.diceMax = 10;
+            break;
+        case 19:
+            retVal.diceQnt = 11;
+            retVal.diceMax = 8;
+            break;
+        case 20:
+            retVal.diceQnt = 10;
+            retVal.diceMax = 10;
+            break;
+        default:
+            retVal.diceQnt = 1;
+            retVal.diceMax = 2;
+            break;
+    }
+
+    return retVal;
+}
 // stupid helper functions ------------------------------------------------------------------------------------------------------
 
 /**
@@ -1577,10 +1733,16 @@ const useDefense = function (def, ifValid, ifInvalid) {
  * @typedef Character
  * 
  * @property {string} name
- * @property {string} system
- * @property {string} attackAttribute
  * 
  * @property {number} Level
+ * 
+ * @property {Resource} HP
+ * @property {Resource} MP
+ * @property {Resource} Stamina
+ * 
+ * @property {string} attackAttribute
+ * @property {string} HPdice
+ * @property {string} MPdice
  * 
  * @property {Attribute} Agility    
  * @property {Attribute} Fortitude  

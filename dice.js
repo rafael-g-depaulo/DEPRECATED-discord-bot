@@ -4,7 +4,7 @@
  */
 
 /**
- * @typedef {Object} Roll
+ * @typedef Roll
  * 
  * @property {Number} diceQnt       The quantity of that die to be rolled
  * @property {Number} diceMax       The maximum roll the die may reach
@@ -15,11 +15,11 @@
  */
 
 /**
- * @typedef {Object} RollResults
+ * @typedef RollResults
  * 
  * @property {string} list      The string representing the list of dice roll results
  * @property {string} sum       The string representing the sum of dice roll results
- * @property {Number} resultSum The sum of all of the dice rolls
+ * @property {number} resultSum The sum of all of the dice rolls
  */
 
 /**** constants *****************************************************************/ 
@@ -39,8 +39,13 @@ const advantageWords = [
     "vantagem",
     "vantajem",
     "adv",
+    "adva",
+    "advan",
+    "advant",
     "van",
     "vant",
+    "vanta",
+    "vantag",
 ];
 
 // array of words that represent disadvantage
@@ -92,6 +97,30 @@ exports.isDiceRollCmd = function(args) {
     else
         return false;
 }
+
+/**
+ * @description check if a command is a valid dice roll
+ * 
+ * @param {string} args The string representing the command & arguments 
+ * 
+ * @returns {Boolean} Wether the args represent at least one dice roll command
+ */
+exports.isDiceSumCmd = function(args) {
+
+    // if there is a valid roll command, return true
+    let regExpStr = "(";
+    for (i in sumWords) {
+        if (i != 0)
+            regExpStr += "|";
+            regExpStr += sumWords[i];
+    }
+    regExpStr += ")";
+    let regExp = new RegExp(regExpStr, "i");
+
+    return regExp.test(args)
+}
+
+
 
 /**
  * @description rolls the dice in the dice param and returns the appropriate string
@@ -339,6 +368,13 @@ const rollDie = function(die) {
         resultSum : resSum
     }
 }
+/**
+ * @description rolls the dice in param and returns apropriate string
+ * 
+ * @param {Roll} die The dice to be rolled
+ * 
+ * @returns {RollResults}
+ */
 exports.rollDie = rollDie
 
 /**
@@ -584,15 +620,13 @@ exports.checkCommand = (cmdStr) => {
 
     if (cmdStr.length <= 0 || cmdStr[0] !== '!')
         return false
-    if (!exports.isDiceRollCmd(cmdStr))
-        return false
 
     cmdShrt = cmdStr.split(' ')[0].trim().replace('!','')
 
-    if (isInArray(cmdShrt, rollCmdWords))
-        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr), true, true, false)
-    else if (isInArray(cmdShrt, sumWords))
-        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr), true, true, true)
+    if (exports.isDiceSumCmd(cmdStr) || exports.isDiceRollCmd(cmdStr))
+        retVal.msg = exports.rollDice(exports.getDiceRoll(cmdStr), true, true, exports.isDiceSumCmd(cmdStr))
+    else
+        return false;
 
     if (retVal.msg !== "")
         return retVal

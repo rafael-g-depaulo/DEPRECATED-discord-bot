@@ -448,6 +448,6 @@ const symbEffects = {
     9: "Você recupera um quarto da sua Vida Máxima",
    10: "O próximo ataque contra você tem -1 desvantagem",
     J: "Você ganha 1 Legend Point",
-    Q: "Role um 1d4. Se deu 6, compre outra carta!",
+    Q: "Role um 1d4. Se deu 4, compre outra carta!",
     K: "Você pode ativar os dois efeitos abaixo em vez de um só"
 };

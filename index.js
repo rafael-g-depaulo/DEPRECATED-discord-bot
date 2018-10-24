@@ -61,7 +61,7 @@ bot.on('message', (message) => {
         if (cmd[0] === "!" && /help/i.test(cmd.split(' ')[0])) {
             let msg = ""
 
-            msg += "Os comandos que existem são:\n\n"
+            msg += "Os comandos que existem são (colchetes -> opcional):\n\n"
             msg += "\t\"!createChar\"\n\t\t-> Para criar um novo personagem"                                                 + "\n\n"
             msg += "\t\"!(atributo) [(des)vantagem+x] [bonus]\"\n\t\t-> Para fazer uma rolagem de atributo"                  + "\n\n"
             msg += "\t\"!iniciativa [(des)vantagem+x] [bonus]\"\n\t\t-> Para rolar iniciativa"                               + "\n\n"
@@ -78,6 +78,8 @@ bot.on('message', (message) => {
             msg += "\t\"!set (Atributo) x\"\n\t\t-> Para mudar o valor base de um atributo"                                  + "\n\n"
             msg += "\t\"!set Guard/Dodge x\"\n\t\t-> Para mudar o seu valor base em Guard ou Dodge"                          + "\n\n"
             msg += "\t\"!bio\"\n\t\t-> Para checar HP/MP/Atributos/etc. do seu personagem ativo"                             + "\n\n"
+            msg += "\t\"!shortRest\"\n\t\t-> realiza um descanço curto"                                                      + "\n\n"
+            msg += "\t\"!longRest\"\n\t\t-> realiza um descanço longo"                                                       + "\n\n"
 
             msg += ""
 
@@ -92,16 +94,27 @@ bot.on('message', (message) => {
 
 // if there is something to send, send it
     if (commandResult) {
+        
         fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
- 
-        if (Object.keys(commandResult.attach).length !== 0)
-            message.channel.send(commandResult.msg, commandResult.attach);
+        
+        // if a conversation, send directly to user
+        if (commandResult.sendDirect)
+            if (Object.keys(commandResult.attach).length !== 0)
+                message.author.send(commandResult.msg, commandResult.attach);
+            else
+                message.author.send(commandResult.msg);
+        // if command, send to channel
         else
-            message.channel.send(commandResult.msg);
-        return;
+            if (Object.keys(commandResult.attach).length !== 0)
+                message.channel.send(commandResult.msg, commandResult.attach);
+            else
+                message.channel.send(commandResult.msg);
+
+        return
+
     }
     // // guardar as informações no arquivo do usuário
     // fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
 })
 
-bot.login('NDAxNTM3MTYzMTEzNjYwNDM2.DUFImw.DhpAJ_Qd2hoIe14WdAK0KAd3qhI');
+bot.login('NDY3ODYyODYxOTAxOTg3ODQw.Diwy7A.4_SulsYYo0Jqeqg1JlnviEPYYVc');
