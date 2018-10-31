@@ -1,11 +1,12 @@
 // Loading modules ////////////////////////////////////////////////
-const Discord = require('discord.js');
-const fs = require('fs');
-const path = require('path');
-const Dice = require('./dice.js');
-const fileIO = require('./fileIO.js');
-const FB = require("./fantasyBattle.js")
-const bot = new Discord.Client();
+const Discord = require('discord.js')
+const fs      = require('fs')
+const path    = require('path')
+const Dice    = require('./lib/dice.js')
+const fileIO  = require('./lib/fileIO.js')
+const FB      = require('./lib/fantasyBattle.js')
+
+const bot = new Discord.Client()
 
 // Array of user info ////////////////////////////////////////////
 let users = [];
@@ -19,7 +20,7 @@ let users = [];
     const dirAttr = true;
 
 bot.on('ready', () => {
-    console.log("ready!");
+    console.log("ready!"); 
 });
 
 // on message to bot
@@ -39,11 +40,11 @@ bot.on('message', (message) => {
   // se a info do usuário não está carregada, carregue-a em memória
     if (!(id in users)) {
         // se a pessoa não tem um arquivo
-        if (!fs.existsSync('users/'+message.author.id+'.json'))
-            fileIO.writeSync('users/'+message.author.id+'.json', '{}');
+        if (!fs.existsSync('../users/'+message.author.id+'.json'))
+            fileIO.writeSync('../users/'+message.author.id+'.json', '{}');
 
         // get the users data from file
-        users[id] = JSON.parse(fileIO.read('users/'+message.author.id+'.json'));
+        users[id] = JSON.parse(fileIO.read('../users/'+message.author.id+'.json'));
     }
 
   // test if command from a module
@@ -95,7 +96,7 @@ bot.on('message', (message) => {
   // if there is something to send, send it
     if (commandResult) {
         
-        fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
+        fileIO.write('../users/'+message.author.id+'.json', JSON.stringify(users[id]));
         
         // if a conversation, send directly to user
         if (commandResult.sendDirect)
@@ -117,4 +118,4 @@ bot.on('message', (message) => {
     // fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
 })
 
-bot.login(fileIO.read('botKey'))
+bot.login(fileIO.read('../botKey'))
