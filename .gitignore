@@ -1,0 +1,4 @@
+*.json
+media/
+.vs/
+.vscode/
