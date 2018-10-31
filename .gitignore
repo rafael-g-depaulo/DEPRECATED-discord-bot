@@ -1,5 +1,8 @@
 *.json
-media/
-users/
+*.bat
 .vs/
 .vscode/
+users/
+media/
+node_modules/
+botKey
