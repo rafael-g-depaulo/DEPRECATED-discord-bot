@@ -46,11 +46,12 @@ bot.on('message', (message) => {
     // get the users data from file
     users[id] = JSON.parse(fileIO.read('../users/'+message.author.id+'.json'));
   }
-
+  
 // test if command from a module
   // resultado do comando
   let commandResult = false;
   // checa se é um commando do/conversa com Fantasy Battle
+  console.log('should be in command')
   if (!commandResult) commandResult = FB.checkCommand(cmd, users[id])
   // checa se é um commando de rolagem de dado
   if (!commandResult) commandResult = Dice.checkCommand(cmd)
@@ -93,8 +94,8 @@ bot.on('message', (message) => {
     }
   })()
 
-  console.log('commandResult: ')
-  console.log(commandResult)
+  // console.log('commandResult: ')
+  // console.log(commandResult)
 
 // if there is something to send, send it
   if (commandResult) {
