@@ -4,5 +4,3 @@ const Dice = require('./../lib/dice.js');
 // let rolls = Dice.getDiceRoll(str);
 // let index = 2;
 // let resStr = Dice.rollDice(rolls, true, true);
-
-// console.log(resStr)

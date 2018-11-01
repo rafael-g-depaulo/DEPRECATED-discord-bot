@@ -16,9 +16,6 @@ let users = [];
   const list = true;
   const sum = true;
 
-  // wether the bot accepts straight attribute roll commands (e.g.: "!Agility" for "!rola Agility")
-  const dirAttr = true;
-
 bot.on('ready', () => {
   console.log("ready!"); 
 });
@@ -38,20 +35,22 @@ bot.on('message', (message) => {
   const cmd = message.content         // user message
   
 // se a info do usuário não está carregada, carregue-a em memória
-  if (!(id in users)) {
+  if (!users.hasOwnProperty(id)) {
     // se a pessoa não tem um arquivo
-    if (!fs.existsSync('../users/'+message.author.id+'.json'))
-      fileIO.writeSync('../users/'+message.author.id+'.json', '{}');
-
+    if (!fs.existsSync(`../users/${message.author.id}.json`)) {
+      fileIO.writeSync(`../users/${message.author.id}.json`, '{}')
+    }
+    
     // get the users data from file
-    users[id] = JSON.parse(fileIO.read('../users/'+message.author.id+'.json'));
+    users[id.toString()] = JSON.parse(fileIO.read(`../users/${message.author.id}.json`));
+    console.log(`users: `, users)
+
   }
   
 // test if command from a module
   // resultado do comando
   let commandResult = false;
   // checa se é um commando do/conversa com Fantasy Battle
-  console.log('should be in command')
   if (!commandResult) commandResult = FB.checkCommand(cmd, users[id])
   // checa se é um commando de rolagem de dado
   if (!commandResult) commandResult = Dice.checkCommand(cmd)
@@ -94,13 +93,10 @@ bot.on('message', (message) => {
     }
   })()
 
-  // console.log('commandResult: ')
-  // console.log(commandResult)
-
 // if there is something to send, send it
   if (commandResult) {
-      
-      fileIO.write('../users/'+message.author.id+'.json', JSON.stringify(users[id]));
+      if (id in users && users[id] != '{}')
+        fileIO.write(`../users/${message.author,id}.json`, JSON.stringify(users[id]));
       
       // if a conversation, send directly to user
       if (commandResult.sendDirect)
