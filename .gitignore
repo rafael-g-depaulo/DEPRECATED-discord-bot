@@ -1,4 +1,7 @@
 *.json
 *.bat
-/node_modules/*
+.vs/
+.vscode/
+media/
+node_modules/
 botKey
