@@ -37,13 +37,12 @@ bot.on('message', (message) => {
 // se a info do usuário não está carregada, carregue-a em memória
   if (!users.hasOwnProperty(id)) {
     // se a pessoa não tem um arquivo
-    if (!fs.existsSync(`../users/${message.author.id}.json`)) {
+    if (!fileIO.existsSync(`../users/${message.author.id}.json`)) {
       fileIO.writeSync(`../users/${message.author.id}.json`, '{}')
     }
     
     // get the users data from file
     users[id.toString()] = JSON.parse(fileIO.read(`../users/${message.author.id}.json`));
-    console.log(`users: `, users)
 
   }
   
