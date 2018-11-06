@@ -122,7 +122,21 @@ describe('testing dice.js', () => {
       expect(Dice.getDiceRoll("5d     14")).toEqual([
         createDie(5, 14, 0, 0, false)
       ])
+      
+      expect(Dice.getDiceRoll("d   4")).toEqual([
+        createDie(1, 4, 0, 0, false)
+      ])
 
+    })
+
+    test('[x] d [y]', () => {
+      expect(Dice.getDiceRoll("2  d   4")).toEqual([
+        createDie(2, 4, 0, 0, false)
+      ])
+
+      expect(Dice.getDiceRoll("7  d   143")).toEqual([
+        createDie(7, 143, 0, 0, false)
+      ])
     })
   })
 
