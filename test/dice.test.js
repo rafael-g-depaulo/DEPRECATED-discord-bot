@@ -13,17 +13,19 @@ describe('testing dice.js', () => {
   // create a constructor function for roll commands
   beforeAll(() => {
     // creating a dice roll
-    createDie = (dQnt, dMax, dAdv, dBon, expl) => {
+    createDie = (dQnt, dMax, dAdv, dBon, expl, sExp) => {
       dAdv = dAdv || 0
       dBon = dBon || 0
       expl = expl || false
+      sExp = sExp || false
 
       return {
         diceQnt: dQnt,
         diceMax: dMax,
         diceAdv: dAdv,
         diceBonus: dBon,
-        explode: expl
+        explode: expl,
+        superExplode: sExp
       }
     }
     
