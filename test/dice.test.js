@@ -67,21 +67,18 @@ describe('testing dice.js', () => {
       expect(Dice.isDiceRollCmd("3d55"))   .toBe(true)
       expect(Dice.isDiceRollCmd("123d44")) .toBe(true)
     }),
-
     // with spaces
     test('[x] d [y]', () => {
       expect(Dice.isDiceRollCmd("5d 6"))   .toBe(true)
       expect(Dice.isDiceRollCmd("24  d55")).toBe(true)
       expect(Dice.isDiceRollCmd("3  d 35")).toBe(true)
     }),
-
     // no first number
     test('d[y]', () => {
       expect(Dice.isDiceRollCmd("d23"))    .toBe(true)
       expect(Dice.isDiceRollCmd(" d8"))    .toBe(true)
       expect(Dice.isDiceRollCmd("d  7"))   .toBe(true)
     })
-
   }),
 
   describe('testing getDiceRoll()', () => {
@@ -90,60 +87,92 @@ describe('testing dice.js', () => {
       expect(Dice.getDiceRoll("d20")).toEqual([
         createDie(1, 20, 0, 0, false)
       ])
-
       expect(Dice.getDiceRoll("d12")).toEqual([
         createDie(1, 12, 0, 0, false)
       ])
     })
-
     test('[x]d[y]', () => {
       expect(Dice.getDiceRoll("1d20")).toEqual([
         createDie(1, 20, 0, 0, false)
       ])
-
       expect(Dice.getDiceRoll("3d12")).toEqual([
         createDie(3, 12, 0, 0, false)
       ])
     })
-
     test('[x] d[y]', () => {
       expect(Dice.getDiceRoll("1 d20")).toEqual([
         createDie(1, 20, 0, 0, false)
       ])
-
       expect(Dice.getDiceRoll("3   d12")).toEqual([
         createDie(3, 12, 0, 0, false)
       ])
     })
-
     test('[x]d [y]', () => {
       expect(Dice.getDiceRoll("2d 40")).toEqual([
         createDie(2, 40, 0, 0, false)
       ])
-
       expect(Dice.getDiceRoll("5d     14")).toEqual([
         createDie(5, 14, 0, 0, false)
       ])
-      
       expect(Dice.getDiceRoll("d   4")).toEqual([
         createDie(1, 4, 0, 0, false)
       ])
 
     })
-
     test('[x] d [y]', () => {
       expect(Dice.getDiceRoll("2  d   4")).toEqual([
         createDie(2, 4, 0, 0, false)
       ])
-
       expect(Dice.getDiceRoll("7  d   143")).toEqual([
         createDie(7, 143, 0, 0, false)
       ])
     })
-
-    test('[x]d[y] adv(+/-)x', () => {
-      expect(Dice.getDiceRoll('2 d   5 adv+2')).toEqual([
-        createDie(2, 5, 2, 0)
+    test('[x]d[y]!', () => {
+      expect(Dice.getDiceRoll('3d6!')).toEqual([
+        createDie(3, 6, 0, 0, true)
+      ])
+      expect(Dice.getDiceRoll('5 d 10 !')).toEqual([
+        createDie(5, 10, 0, 0, true)
+      ])
+      expect(Dice.getDiceRoll('4d    9!')).toEqual([
+        createDie(4, 9, 0, 0, true)
+      ])
+      expect(Dice.getDiceRoll('8d    52   !')).toEqual([
+        createDie(8, 52, 0, 0, true)
+      ])
+    })
+    test('[x]d[y] adv(+/-)[z]', () => {
+      expect(Dice.getDiceRoll('2d5! adv')).toEqual([
+        createDie(2, 5, 1, 0, true)
+      ])
+      expect(Dice.getDiceRoll('2 d   7!! advantage+2')).toEqual([
+        createDie(2, 7, 2, 0, true, true)
+      ])
+      expect(Dice.getDiceRoll('3 26 d 9van - 2')).toEqual([
+        createDie(26, 9, -2, 0)
+      ])
+      expect(Dice.getDiceRoll('13 d 8vant+6')).toEqual([
+        createDie(13, 8, 6, 0)
+      ])
+      expect(Dice.getDiceRoll('3 d 9advan-12')).toEqual([
+        createDie(3, 9, -12, 0)
+      ])
+    })
+    test('[x]d[y] dis(+/-)[z]', () => {
+      expect(Dice.getDiceRoll('2d5 !  dis')).toEqual([
+        createDie(2, 5, -1, 0, true)
+      ])
+      expect(Dice.getDiceRoll('2 d   7 disad+2')).toEqual([
+        createDie(2, 7, -2, 0)
+      ])
+      expect(Dice.getDiceRoll('3 26 d 9desv  - 2')).toEqual([
+        createDie(26, 9, -2, 0)
+      ])
+      expect(Dice.getDiceRoll('13 d 8desvant+6')).toEqual([
+        createDie(13, 8, -6, 0)
+      ])
+      expect(Dice.getDiceRoll('3 d 9desvant-12')).toEqual([
+        createDie(3, 9, -12, 0)
       ])
     })
   })
@@ -159,14 +188,12 @@ describe('testing dice.js', () => {
         resultSum: 11,
         sum: "11"
       })
-
       // multiple die
       expect(Dice._rollDie(createDie(2, 10), bestLuck)).toEqual({
         list: "**10** e **10**",
         resultSum: 20,
         sum: "10 + 10 = 20"
       })
-
       // testing minimum and maximum value
       expect(Dice._rollDie(createDie(5, 10), goodLuck5)).toEqual({
         list: "**10**, **10**, **10**, **10** e 1",
@@ -177,7 +204,6 @@ describe('testing dice.js', () => {
 
     // with bonus
     test('[x]d[y] +[z]', () => {
-
       expect(Dice._rollDie(createDie(2, 12, 0, 5), bestLuck)).toEqual({
         list: "**12** e **12**",
         resultSum: 29,
@@ -187,7 +213,6 @@ describe('testing dice.js', () => {
 
     // with negative bonus
     test('[x]d[y] -[z]', () => {
-
       expect(Dice._rollDie(createDie(2, 12, 0, 5), bestLuck)).toEqual({
         list: "**12** e **12**",
         resultSum: 29,
@@ -197,7 +222,6 @@ describe('testing dice.js', () => {
 
     // with positive advantage
     test('[x]d[y] adv+[z]', () => {
-
       expect(Dice._rollDie(createDie(2, 12, 4), customLuck(3, 1))).toEqual({
         list: "~~12~~, ~~12~~, ~~12~~, ~~1~~, **12** e **12**",
         resultSum: 24,
@@ -207,13 +231,11 @@ describe('testing dice.js', () => {
 
     // with negative advantage
     test('[x]d[y] adv-[z]', () => {
-
       expect(Dice._rollDie(createDie(5, 8, -2), customLuck(2, 2))).toEqual({
         list: "~~8~~, ~~8~~, 1, 1, **8**, **8** e 1",
         resultSum: 19,
         sum: "1 + 1 + 8 + 8 + 1 = 19"
       })
-      
       expect(Dice._rollDie(createDie(2, 8, -2), customLuck(2, 1))).toEqual({
         list: "~~8~~, ~~8~~, 1 e **8**",
         resultSum: 9,
@@ -223,29 +245,24 @@ describe('testing dice.js', () => {
 
     // with advantage and bonus
     test('[x]d[y] +[z] adv+[w]', () => {
-
       expect(Dice._rollDie(createDie(2, 8, -2), customLuck(3, 1))).toEqual({
         list: "~~8~~, ~~8~~, **8** e 1",
         resultSum: 9,
         sum: "8 + 1 = 9"
       })
-
     }),
 
     test('[x]d[y] +/-[z] adv+/-[w]', () => {
-
       expect(Dice._rollDie(createDie(3, 6, 1, 2), customLuck(3, 1))).toEqual({
         list: "**6**, **6**, **6** e ~~1~~",
         resultSum: 20,
         sum: "6 + 6 + 6 (+2) = 20"
       })
-
       expect(Dice._rollDie(createDie(3, 6, -1, 2), customLuck(2, 1))).toEqual({
         list: "~~6~~, **6**, 1 e **6**",
         resultSum: 15,
         sum: "6 + 1 + 6 (+2) = 15"
       })
-
       expect(Dice._rollDie(createDie(3, 4, -2, -5), customLuck(2, 2))).toEqual({
         list: "~~4~~, ~~4~~, 1, 1 e **4**",
         resultSum: 1,
@@ -275,7 +292,6 @@ describe('testing dice.js', () => {
         "__**4d8 -7 dis-3**__: 1 + 8 + 1 + 8 (-7) = 11"
       )
     })
-
     test('multiple dice, list', () => {
       let dice = [
         createDie(1, 20),
