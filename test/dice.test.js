@@ -16,7 +16,7 @@ describe('testing dice.js', () => {
     createDie = (dQnt, dMax, dAdv, dBon, expl, sExp) => {
       dAdv = dAdv || 0
       dBon = dBon || 0
-      expl = expl || false
+      expl = expl || sExp || false
       sExp = sExp || false
 
       return {
@@ -141,6 +141,17 @@ describe('testing dice.js', () => {
         createDie(8, 52, 0, 0, true)
       ])
     })
+    test('[x]d[y]!!', () => {
+      expect(Dice.getDiceRoll('3d3!!')).toEqual([
+        createDie(3, 3, 0, 0, true, true)
+      ])
+      expect(Dice.getDiceRoll('4d7 !!')).toEqual([
+        createDie(4, 7, 0, 0, true, true)
+      ])
+      expect(Dice.getDiceRoll('4d 16   !! ')).toEqual([
+        createDie(4, 16, 0, 0, true, true)
+      ])
+    })
     test('[x]d[y] adv(+/-)[z]', () => {
       expect(Dice.getDiceRoll('2d5! adv')).toEqual([
         createDie(2, 5, 1, 0, true)
@@ -175,6 +186,12 @@ describe('testing dice.js', () => {
         createDie(3, 9, -12, 0)
       ])
     })
+    // test('[x]d[y] +[z]', () => {
+
+    // })
+    // test('[x]d[y]!! adv+[w] + [z]', () => {
+
+    // })
   })
 
   describe('testing rollDie()', () => {
