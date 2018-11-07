@@ -1,12 +1,12 @@
-const Dice   = require('../lib/dice.js');
-const fileIO = require('../lib/fileIO.js');
+const Dice   = require('../lib/dice.js')
+const fileIO = require('../lib/fileIO.js')
 
 // array of example roll commands
 let createDie   // constructor
 let worstLuck   // unluckyiest randomness function
 let bestLuck    // luckiest randomness function
 let goodLuck5   // returns 5 1's and then 0
-let customLuck  // returns N 1's and then 0
+let customLuck  // returns N 1's and then M 0's
 let averageLuck // returns 0.5
 
 describe('testing dice.js', () => {
@@ -138,6 +138,12 @@ describe('testing dice.js', () => {
 
       expect(Dice.getDiceRoll("7  d   143")).toEqual([
         createDie(7, 143, 0, 0, false)
+      ])
+    })
+
+    test('[x]d[y] adv(+/-)x', () => {
+      expect(Dice.getDiceRoll('2 d   5 adv+2')).toEqual([
+        createDie(2, 5, 2, 0)
       ])
     })
   })
