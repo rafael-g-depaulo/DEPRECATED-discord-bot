@@ -35,13 +35,11 @@ describe('testing dice.js', () => {
     bestLuck    = () => 1     // great luck randomness function
     // function that returns 5 1's and then 0
     goodLuck5 = () => {
-      this.luck = this.luck || 5
-      if (--this.luck > 0) return 1
-      else {
-        this.luck = 5; return 0
-      }
+      goodLuck5.luck = goodLuck5.luck || 6
+      if (--goodLuck5.luck > 0) return 1
+      else goodLuck5.luck = 6
+      return 0
     }
-    // good luck timer
 
     customLuck = (goodTimer, badTimer) => {
       let retVal = () => {
@@ -212,10 +210,10 @@ describe('testing dice.js', () => {
         sum: "10 + 10 = 20"
       })
       // testing minimum and maximum value
-      expect(Dice._rollDie(createDie(5, 10), goodLuck5)).toEqual({
-        list: "**10**, **10**, **10**, **10** e 1",
-        resultSum: 41,
-        sum: "10 + 10 + 10 + 10 + 1 = 41"
+      expect(Dice._rollDie(createDie(6, 10), goodLuck5)).toEqual({
+        list: "**10**, **10**, **10**, **10**, **10** e 1",
+        resultSum: 51,
+        sum: "10 + 10 + 10 + 10 + 10 + 1 = 51"
       })
     }),
 
