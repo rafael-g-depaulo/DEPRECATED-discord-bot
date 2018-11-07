@@ -7,8 +7,9 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest --testPathPattern ./test\/.*"
   },
+  "testPathIgnorePatterns": ["/node_modules/", ".git"],
   "author": "Ragan",
   "license": "ISC",
   "dependencies": {
