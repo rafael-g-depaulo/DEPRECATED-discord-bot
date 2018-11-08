@@ -52,7 +52,8 @@ describe('dice.js', () => {
         return 0
       }
       return retVal
-  }})
+    }
+  })
 
   describe('isDiceRollCmd()', () => {
     // standard
