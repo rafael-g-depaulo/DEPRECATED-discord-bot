@@ -7,11 +7,16 @@
     "test": "test"
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest --testPathPattern ./test\/.*"
   },
+  "testPathIgnorePatterns": ["/node_modules/", ".git"],
   "author": "Ragan",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^11.2.1"
+    "discord.js": "^11.2.1",
+    "yarn": "^1.12.1"
+  },
+  "devDependencies": {
+    "jest": "^23.6.0"
   }
 }
