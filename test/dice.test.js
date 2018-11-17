@@ -252,6 +252,7 @@ describe('testing dice.js', () => {
       })
     }),
 
+    // combination of everything
     test('[x]d[y] +/-[z] adv+/-[w]', () => {
       expect(Dice._rollDie(createDie(3, 6, 1, 2), customLuck(3, 1))).toEqual({
         list: "**6**, **6**, **6** e ~~1~~",
@@ -267,6 +268,11 @@ describe('testing dice.js', () => {
         list: "~~4~~, ~~4~~, 1, 1 e **4**",
         resultSum: 1,
         sum: "1 + 1 + 4 (-5) = 1"
+      })
+      expect(Dice._rollDie(createDie(2, 6, -1, -8), customLuck(2, 1))).toEqual({
+        list: "~~6~~, **6** e 1",
+        resultSum: -1,
+        sum: "6 + 1 (-8) = -1"
       })
     })
   }),
