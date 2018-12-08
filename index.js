@@ -63,6 +63,7 @@ bot.on('message', (message) => {
 
       msg += "Os comandos que existem são (colchetes -> opcional):\n\n"
       msg += "\t\"!createChar\"\n\t\t-> Para criar um novo personagem"                                                 + "\n\n"
+      msg += "\t\"!changeChar [nome do personagem]\"\n\t\t-> Para mudar o personagem ativo"                            + "\n\n"
       msg += "\t\"!(atributo) [(des)vantagem+x] [bonus]\"\n\t\t-> Para fazer uma rolagem de atributo"                  + "\n\n"
       msg += "\t\"!iniciativa [(des)vantagem+x] [bonus]\"\n\t\t-> Para rolar iniciativa"                               + "\n\n"
       msg += "\t\"!dano (atributo) [(dis)advantage+x] [bonus]\"\n\t\t-> Para rolar dano"                               + "\n\n"
