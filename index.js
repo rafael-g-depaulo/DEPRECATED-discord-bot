@@ -82,6 +82,7 @@ bot.on('message', (message) => {
       msg += "\t\"!bio\"\n\t\t-> Para checar HP/MP/Atributos/etc. do seu personagem ativo"                                          + "\n\n"
       msg += "\t\"!shortRest\"\n\t\t-> realiza um descanço curto"                                                                   + "\n\n"
       msg += "\t\"!longRest\"\n\t\t-> realiza um descanço longo"                                                                    + "\n\n"
+      msg += `\t"!money (+|-) x (bronze|prata|ouro)"\n\t\t-> adiciona ou remove dinheiro do inventário do personagem`               + "\n\n"
       msg += `\t"!magicPerception"\n\t\t-> faz uma rolagem de percepção mágica (depende de percepção e presciencia)`                + "\n\n"
       msg += `\t"!reflexos"\n\t\t-> faz uma rolagem de reflexos (depende de agilidade e percepção)`                                 + "\n\n"
 

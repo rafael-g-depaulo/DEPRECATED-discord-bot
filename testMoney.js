@@ -72,7 +72,6 @@ const moneyChange = (cmd) => {
       char.money[kind] += ammount
     }
   }
-  retVal.msg += '\n\n'
 }
 // end
 
