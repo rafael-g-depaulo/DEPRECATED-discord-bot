@@ -16,9 +16,19 @@ let users = [];
   const list = true;
   const sum = true;
 
+  // wether the bot logs to console the messages it recieves
+  const logMessages = true
+// setting up bot constants //////////////////////////////////////
+
 bot.on('ready', () => {
   console.log("ready!"); 
 });
+
+bot.on('message', message => logMessages &&
+  console.log(`message from ${message.author.username} ${
+    message.channel.type === "dm" ? "as dm" : `at ${message.channel.name}`
+  }: "${message.content}"`)
+)
 
 // on message to bot
 bot.on('message', (message) => {
