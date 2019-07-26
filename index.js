@@ -17,7 +17,7 @@ let users = [];
   const sum = true;
 
   // wether the bot logs to console the messages it recieves
-  const logMessages = true
+  const logMessages = false
 // setting up bot constants //////////////////////////////////////
 
 bot.on('ready', () => {
@@ -129,4 +129,7 @@ bot.on('message', (message) => {
   // fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
 })
 
-bot.login(fileIO.read('../botKey'))
+if (process.env.BOT_TOKEN)
+  bot.login(process.env.BOT_TOKEN)
+else
+  bot.login(fileIO.read('../botKey'))
