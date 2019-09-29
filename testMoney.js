@@ -1,8 +1,6 @@
 const cmds = [
-  "money + 12 silver",
-  "money + 7 gold",
-  "money - 3 ouro",
-  "money + 45 cobre",
+  "set level 5",
+  "set    level    2",
 ]
 const command = 'money'
 const retVal = { msg: "" }
@@ -12,6 +10,12 @@ CommandWords.money = [
   "gold",
   "dinheiro",
   "deniro",
+]
+CommandWords.level = [
+  "level",
+  "lvl",
+  "nível",
+  "nivel",
 ]
 const MoneyWords = {
   copper: [
@@ -35,6 +39,7 @@ const MoneyWords = {
 
 const char = {
   name: 'Ka',
+  level: 0,
   money: {
     copper: 0,
     silver: 0,
@@ -43,38 +48,21 @@ const char = {
 }
 
 // start
-const moneyChange = (cmd) => {
-  const regex = new RegExp(`(\\+|-) * ([0-9]+) (${Object.values(MoneyWords).map(x => x.join('|')).join('|')})`, 'i')
+const levelChange = (cmd) => {
+  const regex = new RegExp(`set +(${CommandWords.level.join('|')}) +([0-9]+)`, 'i')
   if (!regex.test(cmd)) {
-    retVal.msg += "Aprenda a usar o comando, idiota. o formato certo é \"!money (+|-) x (bronze|prata|ouro)\""
+    retVal.msg += "Aprenda a usar o comando. o formato certo é \"!set level x\""
   }
   else {
-    const [ _, addOrRemove, ammount_str, kind_str ] = regex.exec(cmd)
-
-    // make regexes for kind with moneywords
-    const copperRegex = new RegExp(`(${MoneyWords.copper.join('|')})`, 'i')
-    const silverRegex = new RegExp(`(${MoneyWords.silver.join('|')})`, 'i')
-    const goldRegex   = new RegExp(`(${MoneyWords.gold.join('|')})`, 'i')
-
-    // get kind of currency to add using regexes
-    const kind =
-      goldRegex.test(kind_str) ? 'gold' :
-      silverRegex.test(kind_str) ? 'silver' :
-      copperRegex.test(kind_str) ? 'copper' : 'invalid'
-
-    // if no correct kind inserted
-    if (kind === 'invalid') 
-      retVal.msg += "Aprenda a usar o comando, idiota. o formato certo é \"!money (+|-) x (bronze|prata|ouro)\""
-    else {
-      const isAdd = addOrRemove === '+'
-      const ammount = isAdd ? Number(ammount_str) : -1 * Number(ammount_str)
-      retVal.msg += `${isAdd ? 'Adicionado' : 'Removido'} ${Math.abs(ammount)} moedas de ${kind} ${isAdd ? 'para' : 'de'} ${char.name}. (${char.money[kind]} -> ${char.money[kind] + ammount})`
-      char.money[kind] += ammount
-    }
+    const level = Number(regex.exec(cmd)[2])
+    const oldLevel = char.level
+    char.level = level
+    retVal.msg += `Level de ${char.name} mudado, de ${oldLevel} para ${level}`
   }
 }
 // end
 
-cmds.forEach(moneyChange)
+cmds.forEach(levelChange)
 
 console.log(retVal.msg)
+console.log(char)
