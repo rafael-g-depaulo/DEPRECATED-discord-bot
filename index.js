@@ -16,9 +16,19 @@ let users = [];
   const list = true;
   const sum = true;
 
+  // wether the bot logs to console the messages it recieves
+  const logMessages = false
+// setting up bot constants //////////////////////////////////////
+
 bot.on('ready', () => {
   console.log("ready!"); 
 });
+
+bot.on('message', message => logMessages &&
+  console.log(`message from ${message.author.username} ${
+    message.channel.type === "dm" ? "as dm" : `at ${message.channel.name}`
+  }: "${message.content}"`)
+)
 
 // on message to bot
 bot.on('message', (message) => {
@@ -121,4 +131,7 @@ bot.on('message', (message) => {
   // fileIO.write('users/'+message.author.id+'.json', JSON.stringify(users[id]));
 })
 
-bot.login(fileIO.read('../botKey'))
+if (process.env.BOT_TOKEN)
+  bot.login(process.env.BOT_TOKEN)
+else
+  bot.login(fileIO.read('../botKey'))
